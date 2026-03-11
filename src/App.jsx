@@ -1,18 +1,19 @@
 /**
  * @fileoverview Composant racine — navigation par useState.
  *
- * Sprint 1 : la vue M3 (bande-répertoire) est branchée sur le vrai composant.
- * Les 4 autres vues restent sur leurs placeholders (sprints à venir).
+ * Sprint 2 : la vue M2 (jeu de cartes) est branchée sur JeuPaires (session A).
+ * Sprint 1 : la vue M3 (bande-répertoire) reste opérationnelle.
+ * M0, M1, M4 : placeholders (sprints à venir).
  */
 
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { VUES, NAV_CONFIG, VUE_INITIALE } from "./config/navigation.config";
 import { BandeRepertoire } from "./components/BandeRepertoire";
+import { JeuPaires } from "./components/JeuCartes";
 import {
     TableauDeBord,
     ModelageInteractif,
-    JeuDeCartes,
     EvaluationFormative,
 } from "./components/placeholders";
 
@@ -70,6 +71,19 @@ VueBandeRepertoire.propTypes = {
     onChangerSeance: PropTypes.func.isRequired,
 };
 
+// ── Vue M2 ────────────────────────────────────────────────────────────────────
+
+/**
+ * Vue M2 — Jeu de cartes, session A (cartes visibles).
+ */
+function VueJeuCartes() {
+    return (
+        <div className="max-w-3xl mx-auto p-6">
+            <JeuPaires />
+        </div>
+    );
+}
+
 // ── Navigation ────────────────────────────────────────────────────────────────
 
 /**
@@ -120,6 +134,8 @@ export default function App() {
 
     function renderVue() {
         switch (vueActive) {
+            case VUES.JEU_DE_CARTES:
+                return <VueJeuCartes />;
             case VUES.BANDE_REPERTOIRE:
                 return (
                     <VueBandeRepertoire
@@ -129,8 +145,6 @@ export default function App() {
                 );
             case VUES.MODELAGE:
                 return <ModelageInteractif />;
-            case VUES.JEU_DE_CARTES:
-                return <JeuDeCartes />;
             case VUES.EVALUATION:
                 return <EvaluationFormative />;
             default:
