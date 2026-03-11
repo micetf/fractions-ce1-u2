@@ -19,6 +19,13 @@
  *   - FRACTIONS_S3, FORMES_S3 : constantes S3
  *
  * Sprint 7 — Séance 4 (1/5, 1/10 — bande, répertoire complet)
+ *
+ * Sprint 8 — Séance 5 (écriture fractionnaire en chiffres, triplets)
+ *   - ModelageS5           : modelage séance 5 (2 onglets)
+ *   - CarteFractionSVG     : carte symbolique 1/N avec états progressifs
+ *   - CorpusMiseEnCommunS5 : triplets + tableau de décomposition phase ④
+ *   - useModelageS5        : hook logique séance 5
+ *   - FRACTIONS_S5, ETAPE_S5 : constantes S5
  *   - ModelageS4              : modelage séance 4 (3 onglets)
  *   - CorpusMiseEnCommunS4    : 3 points phase ④ séance 4
  *   - BandeRepertoireVisuelle : 7 lignes révélables pour la phase ③b
@@ -54,3 +61,14 @@ export { default as ModelageS4 } from "./ModelageS4";
 export { default as CorpusMiseEnCommunS4 } from "./CorpusMiseEnCommunS4";
 export { default as BandeRepertoireVisuelle } from "./BandeRepertoireVisuelle";
 export { useModelageS4, FRACTIONS_S4, ORDRE_REPERTOIRE } from "./useModelageS4";
+// ── Sprint 8 — Séance 5 (écriture fractionnaire, triplets) ───────────────────
+export { default as ModelageS5 } from "./ModelageS5";
+export { default as CarteFractionSVG } from "./CarteFractionSVG";
+export { default as CorpusMiseEnCommunS5 } from "./CorpusMiseEnCommunS5";
+export {
+    useModelageS5,
+    FRACTIONS_S5,
+    ETAPE_S5,
+    texteModelageS5,
+    INDEX_MODELAGE_INITIAL,
+} from "./useModelageS5";

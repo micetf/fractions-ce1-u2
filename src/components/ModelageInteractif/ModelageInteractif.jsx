@@ -15,6 +15,7 @@ import { useState } from "react";
 import ModelageS1 from "./ModelageS1";
 import ModelageS3 from "./ModelageS3";
 import ModelageS4 from "./ModelageS4";
+import ModelageS5 from "./ModelageS5";
 
 /** @type {Array<{ id: string, label: string, fractions: string, sprint: string, implemente: boolean }>} */
 const SEANCES_M1 = [
@@ -44,7 +45,7 @@ const SEANCES_M1 = [
         label: "Séance 5",
         fractions: "Répertoire complet",
         sprint: "8",
-        implemente: false,
+        implemente: true,
     },
 ];
 
@@ -111,6 +112,8 @@ export default function ModelageInteractif() {
                     <ModelageS3 />
                 ) : seanceActive === "S4" ? (
                     <ModelageS4 />
+                ) : seanceActive === "S5" ? (
+                    <ModelageS5 />
                 ) : (
                     <StubSeance seance={seance} />
                 )
