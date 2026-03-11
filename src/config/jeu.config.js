@@ -177,3 +177,71 @@ export const FEEDBACK_INCORRECT =
  */
 export const INVITE_JUSTIFICATION =
     "Pourquoi ces deux cartes vont-elles ensemble ?";
+
+// ── Mode de jeu ───────────────────────────────────────────────────────────────
+
+/**
+ * Modes du jeu de cartes.
+ * @readonly
+ * @enum {string}
+ */
+export const MODE_JEU = {
+    PAIRES: "paires", // S2 — image + lettres, 3 fractions
+    TRIPLETS: "triplets", // S6 — image + lettres + chiffres, 7 fractions
+};
+
+// ── Profils de jeu — triplets S6 ─────────────────────────────────────────────
+
+/**
+ * Configuration des profils pour le mode triplets (S6).
+ *
+ * - STANDARD   : 7 fractions × 3 types = 21 cartes — source : fiche S6, matériel
+ * - DIFFICULTE : 3 fractions (1/2, 1/4, 1/8) × 3 types = 9 cartes
+ *                Source : fiche S6, différenciation —
+ *                « enveloppe réduite : 9 cartes (3 triplets : 1/2, 1/4, 1/8) »
+ *
+ * Note : le profil AVANCE de S6 est une règle de jeu différente
+ * (retourner d'abord la carte-chiffres) — même jeu de 21 cartes.
+ * On ne crée pas de profil distinct pour cela.
+ *
+ * @type {Record<string, { label: string, fractionsIds: string[] }>}
+ */
+export const PROFILS_TRIPLETS = {
+    [PROFIL.STANDARD]: {
+        label: "Standard — 7 fractions (21 cartes)",
+        fractionsIds: ["1-2", "1-3", "1-4", "1-5", "1-6", "1-8", "1-10"],
+    },
+    [PROFIL.DIFFICULTE]: {
+        label: "En difficulté — 3 fractions (9 cartes)",
+        fractionsIds: ["1-2", "1-4", "1-8"],
+    },
+};
+
+// ── Feedback triplets ─────────────────────────────────────────────────────────
+
+/**
+ * Formule de feedback CORRECT pour un triplet.
+ * Adaptée de la formulation prescrite fiche S6, session A :
+ * « Ces trois cartes vont ensemble parce que c'est toutes la même fraction :
+ * un huitième. L'image montre une forme partagée en 8 parts égales avec une
+ * part coloriée. La carte-lettres dit 'un huitième'. La carte-chiffres écrit 1/8. »
+ *
+ * @param {string} nomLettres    - Ex. «un huitième»
+ * @param {number} denominateur  - Ex. 8
+ * @param {string} chiffres      - Ex. «1/8»
+ * @returns {string}
+ */
+export function feedbackCorrectTriplet(nomLettres, denominateur, chiffres) {
+    return (
+        `Bravo ! Le tout est partagé en ${denominateur} parts égales. ` +
+        `J'en prends une. C'est « ${nomLettres} », qu'on écrit ${chiffres}.`
+    );
+}
+
+/**
+ * Invite de justification verbale pour les triplets.
+ * Source : fiche S6, session A.
+ * @type {string}
+ */
+export const INVITE_JUSTIFICATION_TRIPLET =
+    "Explique ce triplet. Pourquoi ces trois cartes vont-elles ensemble ?";

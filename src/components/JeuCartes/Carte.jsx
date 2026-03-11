@@ -19,6 +19,7 @@
 import PropTypes from "prop-types";
 import { TYPE_CARTE } from "../../config/jeu.config";
 import ImageFraction from "./ImageFraction";
+import CarteFractionSVG from "../ModelageInteractif/CarteFractionSVG";
 
 /**
  * @typedef {'neutre'|'selectionnee'|'correcte'|'incorrecte'} EtatCarte
@@ -56,6 +57,7 @@ export default function Carte({
     fractionId,
     type,
     nomLettres,
+    denominateur,
     etat = "neutre",
     onClick,
     taille = 72,
@@ -75,7 +77,9 @@ export default function Carte({
             aria-label={
                 type === TYPE_CARTE.IMAGE
                     ? `Carte image : ${nomLettres}`
-                    : `Carte mot : ${nomLettres}`
+                    : type === TYPE_CARTE.CHIFFRES
+                      ? `Carte chiffres : ${nomLettres}`
+                      : `Carte mot : ${nomLettres}`
             }
             aria-pressed={etat === "selectionnee"}
             className={[
@@ -110,13 +114,19 @@ export default function Carte({
                     taille={taille}
                     grise={etat === "incorrecte"}
                 />
+            ) : type === TYPE_CARTE.CHIFFRES ? (
+                <ContenuChiffres denominateur={denominateur} etat={etat} />
             ) : (
                 <ContenuLettres nomLettres={nomLettres} etat={etat} />
             )}
 
             {/* Étiquette de type — en bas de carte */}
             <span className="absolute bottom-1.5 text-xs text-slate-300 font-mono">
-                {type === TYPE_CARTE.IMAGE ? "image" : "mot"}
+                {type === TYPE_CARTE.IMAGE
+                    ? "image"
+                    : type === TYPE_CARTE.CHIFFRES
+                      ? "1/n"
+                      : "mot"}
             </span>
         </button>
     );
@@ -138,6 +148,24 @@ ContenuImage.propTypes = {
     fractionId: PropTypes.string.isRequired,
     taille: PropTypes.number.isRequired,
     grise: PropTypes.bool,
+};
+
+/**
+ * Contenu d'une carte de type "chiffres" — utilise CarteFractionSVG (sprint 8).
+ */
+function ContenuChiffres({ denominateur, etat }) {
+    return (
+        <CarteFractionSVG
+            denominateur={denominateur}
+            etat="complet"
+            taille={etat === "incorrecte" ? 60 : 64}
+        />
+    );
+}
+
+ContenuChiffres.propTypes = {
+    denominateur: PropTypes.number.isRequired,
+    etat: PropTypes.string.isRequired,
 };
 
 /**
@@ -174,8 +202,13 @@ ContenuLettres.propTypes = {
 Carte.propTypes = {
     id: PropTypes.string.isRequired,
     fractionId: PropTypes.string.isRequired,
-    type: PropTypes.oneOf([TYPE_CARTE.IMAGE, TYPE_CARTE.LETTRES]).isRequired,
+    type: PropTypes.oneOf([
+        TYPE_CARTE.IMAGE,
+        TYPE_CARTE.LETTRES,
+        TYPE_CARTE.CHIFFRES,
+    ]).isRequired,
     nomLettres: PropTypes.string.isRequired,
+    denominateur: PropTypes.number,
     etat: PropTypes.oneOf(["neutre", "selectionnee", "correcte", "incorrecte"]),
     onClick: PropTypes.func,
     taille: PropTypes.number,

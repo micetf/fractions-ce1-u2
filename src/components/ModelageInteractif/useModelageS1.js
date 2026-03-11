@@ -50,10 +50,10 @@ export const FORMES_S1 = [
 
 /** Noms des formes avec article (pour les textes du modelage). */
 const NOM_FORME = {
-    carre: "le carré",
-    rectangle: "le rectangle",
-    disque: "le disque",
-    eventail: "l'éventail",
+    carre: { avec: "le carré", de: "du carré" },
+    rectangle: { avec: "le rectangle", de: "du rectangle" },
+    disque: { avec: "le disque", de: "du disque" },
+    eventail: { avec: "l'éventail", de: "de l'éventail" },
 };
 
 /** Ordre des étapes. */
@@ -70,7 +70,10 @@ const ORDRE_ETAPES = [ETAPE.TOUT, ETAPE.PARTAGE, ETAPE.COLORIE];
  * @returns {Record<string, { titre: string, texte: string, question?: string }>}
  */
 export function texteModelage(fraction, formeId) {
-    const forme = NOM_FORME[formeId] ?? "la forme";
+    const { avec: forme, de: deForme } = NOM_FORME[formeId] ?? {
+        avec: "la forme",
+        de: "de la forme",
+    };
     const { denominateur, nomLettres } = fraction;
 
     return {
@@ -80,12 +83,13 @@ export function texteModelage(fraction, formeId) {
         },
         [ETAPE.PARTAGE]: {
             titre: `Je partage en ${denominateur} parts`,
-            texte: `Je veux représenter ${nomLettres}. ${denominateur} parts égales, ça veut dire que chaque part est la même taille. Je partage ${forme} en ${denominateur} parts égales.`,
+            texte: `Je veux représenter ${nomLettres}. Je partage ${forme} en ${denominateur} parts égales.`,
             question: `En combien de parts ai-je partagé ${forme} ?`,
         },
         [ETAPE.COLORIE]: {
             titre: "Je colorie une seule part",
-            texte: `Je colorie UNE seule des parties. J'ai colorié ${nomLettres} de ${forme}.`,
+            texte: `Je colorie UNE seule des parties. J'ai colorié ${nomLettres} ${deForme}.`,
+            //                                                                  ^^^^^^^^
             question: `Pourquoi est-ce ${nomLettres} ?`,
             reponseAttendue: `C'est ${nomLettres} parce que ${forme} est partagé en ${denominateur} parts égales et j'en ai colorié une.`,
         },

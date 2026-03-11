@@ -12,6 +12,7 @@ import { getFractionById } from "../../config/fractions.config";
 import {
     TYPE_CARTE,
     PROFILS_PAIRES,
+    PROFILS_TRIPLETS,
     PROFIL,
     CARTE_UN,
 } from "../../config/jeu.config";
@@ -99,4 +100,63 @@ export function genererCartes(profil = PROFIL.STANDARD) {
  */
 export function etatsInitiaux(cartes, etatInitial) {
     return Object.fromEntries(cartes.map((c) => [c.id, etatInitial]));
+}
+
+/**
+ * Génère la liste de CarteJeu pour le mode triplets (S6).
+ * Trois cartes par fraction : image + lettres + chiffres.
+ * Pas de carte "un" — elle n'appartient pas au répertoire S6.
+ * Les cartes sont mélangées (Fisher-Yates).
+ *
+ * Composition selon le profil :
+ *   - STANDARD   : 7 fractions × 3 = 21 cartes
+ *   - DIFFICULTE : 3 fractions × 3 = 9 cartes
+ *
+ * Source : fiche S6, matériel et différenciation.
+ *
+ * @param {string} [profil] - Valeur de PROFIL (défaut : STANDARD)
+ * @returns {CarteJeu[]}
+ */
+export function genererCartesTriplets(profil = PROFIL.STANDARD) {
+    const config =
+        PROFILS_TRIPLETS[profil] ?? PROFILS_TRIPLETS[PROFIL.STANDARD];
+    const cartes = [];
+
+    for (const fractionId of config.fractionsIds) {
+        const fraction = getFractionById(fractionId);
+        if (!fraction) continue;
+
+        cartes.push({
+            id: `${fractionId}_image`,
+            fractionId,
+            type: TYPE_CARTE.IMAGE,
+            nomLettres: fraction.nomLettres,
+            denominateur: fraction.denominateur,
+            chiffres: fraction.chiffres,
+        });
+        cartes.push({
+            id: `${fractionId}_lettres`,
+            fractionId,
+            type: TYPE_CARTE.LETTRES,
+            nomLettres: fraction.nomLettres,
+            denominateur: fraction.denominateur,
+            chiffres: fraction.chiffres,
+        });
+        cartes.push({
+            id: `${fractionId}_chiffres`,
+            fractionId,
+            type: TYPE_CARTE.CHIFFRES,
+            nomLettres: fraction.nomLettres,
+            denominateur: fraction.denominateur,
+            chiffres: fraction.chiffres,
+        });
+    }
+
+    // Mélange Fisher-Yates
+    for (let i = cartes.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cartes[i], cartes[j]] = [cartes[j], cartes[i]];
+    }
+
+    return cartes;
 }
