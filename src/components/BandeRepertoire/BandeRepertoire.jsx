@@ -30,12 +30,16 @@ import FractionLigne from "./FractionLigne";
  * @param {number}  props.seanceDebloquee  - Dernière séance conduite (1–6).
  *                                          Détermine quelles fractions sont visibles
  *                                          et si la colonne « chiffres » est affichée.
+ * @param {boolean} [props.modeEleve]      - Si true : affichage lecture seule sans
+ *                                          contrôles — usage en session C (RF-M3-04).
+ *                                          Si false (défaut) : mode enseignant.
  * @param {boolean} [props.modeProjection] - Si true : taille et contrastes augmentés
  *                                          pour la projection TBI (RF-M1-01, RF-M3-05).
  * @returns {JSX.Element}
  */
 export default function BandeRepertoire({
     seanceDebloquee,
+    modeEleve = false,
     modeProjection = false,
 }) {
     // La colonne « chiffres » est visible uniquement à partir de S5.
@@ -53,9 +57,12 @@ export default function BandeRepertoire({
                 >
                     Répertoire des fractions
                 </h2>
-                <span className="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-0.5 rounded">
-                    S{seanceDebloquee}
-                </span>
+                {/* Badge séance masqué en mode élève (RF-M3-04 : lecture seule, sans repères de progression) */}
+                {!modeEleve && (
+                    <span className="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-0.5 rounded">
+                        S{seanceDebloquee}
+                    </span>
+                )}
             </div>
 
             {/* ── Tableau ─────────────────────────────────────────────────────── */}
@@ -123,5 +130,6 @@ export default function BandeRepertoire({
 
 BandeRepertoire.propTypes = {
     seanceDebloquee: PropTypes.number.isRequired,
+    modeEleve: PropTypes.bool,
     modeProjection: PropTypes.bool,
 };

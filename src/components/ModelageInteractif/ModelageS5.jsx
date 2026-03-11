@@ -24,6 +24,7 @@ import { useModelageS5, FRACTIONS_S5, ETAPE_S5 } from "./useModelageS5";
 import FormePartageeSVG from "./FormePartageeSVG";
 import CarteFractionSVG from "./CarteFractionSVG";
 import CorpusMiseEnCommunS5 from "./CorpusMiseEnCommunS5";
+import { BandeRepertoire } from "../BandeRepertoire";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -398,6 +399,11 @@ export default function ModelageS5() {
             <div className="flex gap-1 border-b border-slate-200">
                 {[
                     { id: "modelage", label: "② Modelage", duree: "10 min" },
+                    {
+                        id: "ref-repertoire",
+                        label: "Répertoire de référence",
+                        duree: "RF-M3-05",
+                    },
                     { id: "mec", label: "④ Mise en commun", duree: "11 min" },
                 ].map((o) => (
                     <button
@@ -421,6 +427,9 @@ export default function ModelageS5() {
             {/* Contenu */}
             <div className="pt-1">
                 {onglet === "modelage" && <OngletModelage />}
+                {onglet === "ref-repertoire" && (
+                    <BandeRepertoire seanceDebloquee={5} modeProjection />
+                )}
                 {onglet === "mec" && <CorpusMiseEnCommunS5 />}
             </div>
         </div>

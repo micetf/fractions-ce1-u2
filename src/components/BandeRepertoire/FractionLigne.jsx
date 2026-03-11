@@ -18,6 +18,7 @@
 
 import PropTypes from "prop-types";
 import BandeSVG from "./BandeSVG";
+import CarteFractionSVG from "../ModelageInteractif/CarteFractionSVG";
 
 /**
  * Couleurs de badge par séance d'introduction.
@@ -68,8 +69,8 @@ export default function FractionLigne({ fraction, visible, afficherChiffres }) {
 
                 {/* Colonne chiffres — masquée si présente */}
                 {afficherChiffres && (
-                    <td className="py-2 px-4 w-16 text-center">
-                        <span className="inline-block h-4 w-8 rounded bg-slate-200 animate-pulse" />
+                    <td className="py-2 px-3 w-20 text-center">
+                        <span className="inline-block h-12 w-8 rounded bg-slate-200 animate-pulse" />
                     </td>
                 )}
             </tr>
@@ -100,12 +101,15 @@ export default function FractionLigne({ fraction, visible, afficherChiffres }) {
                 <BandeSVG denominateur={fraction.denominateur} />
             </td>
 
-            {/* Écriture en chiffres — disponible dès S5 (RF-M3-02) */}
+            {/* Écriture en chiffres — disponible dès S5 (RF-M3-02).
+          CarteFractionSVG : cohérence visuelle avec M1/S5 (sprint 8). */}
             {afficherChiffres && (
-                <td className="py-2 px-4 w-16 text-center">
-                    <span className="text-base font-mono font-bold text-blue-700 tracking-wide">
-                        {fraction.chiffres}
-                    </span>
+                <td className="py-2 px-3 w-20 text-center">
+                    <CarteFractionSVG
+                        denominateur={fraction.denominateur}
+                        etat="complet"
+                        taille={48}
+                    />
                 </td>
             )}
         </tr>

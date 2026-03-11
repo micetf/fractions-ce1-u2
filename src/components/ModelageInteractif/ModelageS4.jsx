@@ -21,6 +21,7 @@ import { useModelageS4, FRACTIONS_S4, ETAPE } from "./useModelageS4";
 import FormePartageeSVG from "./FormePartageeSVG";
 import BandeRepertoireVisuelle from "./BandeRepertoireVisuelle";
 import CorpusMiseEnCommunS4 from "./CorpusMiseEnCommunS4";
+import { BandeRepertoire } from "../BandeRepertoire";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -258,6 +259,11 @@ export default function ModelageS4() {
     const onglets = [
         { id: "modelage", label: "② Modelage", duree: "8 min" },
         { id: "repertoire", label: "③b Bande-répertoire", duree: "12 min" },
+        {
+            id: "ref-repertoire",
+            label: "Répertoire de référence",
+            duree: "RF-M3-05",
+        },
         { id: "mec", label: "④ Mise en commun", duree: "7 min" },
     ];
 
@@ -305,6 +311,9 @@ export default function ModelageS4() {
             <div className="pt-1">
                 {onglet === "modelage" && <OngletModelage />}
                 {onglet === "repertoire" && <BandeRepertoireVisuelle />}
+                {onglet === "ref-repertoire" && (
+                    <BandeRepertoire seanceDebloquee={4} modeProjection />
+                )}
                 {onglet === "mec" && <CorpusMiseEnCommunS4 />}
             </div>
         </div>

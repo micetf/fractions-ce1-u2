@@ -17,48 +17,86 @@ import { ModelageInteractif } from "./components/ModelageInteractif";
 // ── Vues disponibles ──────────────────────────────────────────────────────────
 
 /**
- * Vue M3 — Bande-répertoire avec sélecteur de séance.
+ * Vue M3 — Bande-répertoire avec sélecteur de séance et bascule mode.
  *
- * Le sélecteur (1–6) simule l'avancement dans la séquence.
- * En production, seanceDebloquee sera géré dans un contexte global
- * ou persisté (sprint à préciser).
+ * Mode enseignant : sélecteur de séance visible (contrôle RF-M3-03).
+ * Mode élève      : lecture seule, sans contrôles (RF-M3-04 —
+ *                   accessible en session C de S6).
  *
  * @param {Object} props
  * @param {number} props.seanceDebloquee
  * @param {(n: number) => void} props.onChangerSeance
  */
 function VueBandeRepertoire({ seanceDebloquee, onChangerSeance }) {
+    const [modeEleve, setModeEleve] = useState(false);
+
     return (
-        <div className="max-w-2xl mx-auto p-6 space-y-6">
-            {/* Contrôle de séance — pour tester le déverrouillage progressif */}
-            <div className="flex items-center gap-3 p-3 bg-slate-100 rounded-lg">
-                <span className="text-sm text-slate-600 font-medium shrink-0">
-                    Séance débloquée :
-                </span>
-                <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5, 6].map((n) => (
-                        <button
-                            key={n}
-                            onClick={() => onChangerSeance(n)}
-                            className={[
-                                "w-8 h-8 rounded text-sm font-semibold transition-colors",
-                                seanceDebloquee === n
-                                    ? "bg-slate-700 text-white"
-                                    : "bg-white text-slate-500 hover:bg-slate-200",
-                            ].join(" ")}
-                        >
-                            {n}
-                        </button>
-                    ))}
+        <div className="max-w-2xl mx-auto p-6 space-y-4">
+            {/* Bascule mode enseignant / élève */}
+            <div className="flex items-center justify-between gap-3 p-3 bg-slate-100 rounded-lg flex-wrap">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-600 font-medium">
+                        Mode :
+                    </span>
+                    <button
+                        onClick={() => setModeEleve(false)}
+                        className={[
+                            "px-3 py-1 rounded text-sm font-semibold transition-colors",
+                            !modeEleve
+                                ? "bg-slate-700 text-white"
+                                : "bg-white text-slate-500 hover:bg-slate-200",
+                        ].join(" ")}
+                    >
+                        Enseignant
+                    </button>
+                    <button
+                        onClick={() => setModeEleve(true)}
+                        className={[
+                            "px-3 py-1 rounded text-sm font-semibold transition-colors",
+                            modeEleve
+                                ? "bg-slate-700 text-white"
+                                : "bg-white text-slate-500 hover:bg-slate-200",
+                        ].join(" ")}
+                    >
+                        Élève (S6-C)
+                    </button>
                 </div>
-                <span className="text-xs text-slate-400 ml-2">
-                    {seanceDebloquee >= 5
-                        ? "↳ Colonne « chiffres » visible"
-                        : ""}
-                </span>
+
+                {/* Contrôle de séance — masqué en mode élève (RF-M3-04) */}
+                {!modeEleve && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500 font-medium shrink-0">
+                            Séance débloquée :
+                        </span>
+                        <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5, 6].map((n) => (
+                                <button
+                                    key={n}
+                                    onClick={() => onChangerSeance(n)}
+                                    className={[
+                                        "w-8 h-8 rounded text-sm font-semibold transition-colors",
+                                        seanceDebloquee === n
+                                            ? "bg-slate-700 text-white"
+                                            : "bg-white text-slate-500 hover:bg-slate-200",
+                                    ].join(" ")}
+                                >
+                                    {n}
+                                </button>
+                            ))}
+                        </div>
+                        {seanceDebloquee >= 5 && (
+                            <span className="text-xs text-blue-500 ml-1">
+                                ↳ Colonne « chiffres » visible
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
 
-            <BandeRepertoire seanceDebloquee={seanceDebloquee} />
+            <BandeRepertoire
+                seanceDebloquee={seanceDebloquee}
+                modeEleve={modeEleve}
+            />
         </div>
     );
 }
