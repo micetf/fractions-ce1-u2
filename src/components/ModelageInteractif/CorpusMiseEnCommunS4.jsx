@@ -22,8 +22,6 @@
 
 import { useState } from "react";
 import PropTypes from "prop-types";
-import LigneBande from "./BandeRepertoireVisuelle";
-import { ORDRE_REPERTOIRE } from "./useModelageS4";
 
 // ── Tableau-répertoire ────────────────────────────────────────────────────────
 
