@@ -1,9 +1,11 @@
 /**
  * @fileoverview Composant racine — navigation par useState.
  *
- * Sprint 2 : la vue M2 (jeu de cartes) est branchée sur JeuPaires (session A).
- * Sprint 1 : la vue M3 (bande-répertoire) reste opérationnelle.
- * M0, M1, M4 : placeholders (sprints à venir).
+ * Sprint 11 : M4 BilanS6 remplace le placeholder EvaluationFormative.
+ * Sprint 2–10 : M2 JeuCartes (sessions A/B/C paires + triplets).
+ * Sprint 1, 9 : M3 BandeRepertoire interactive.
+ * Sprint 5–8 : M1 ModelageInteractif (S1, S3, S4, S5).
+ * M0 : placeholder (sprint 13).
  */
 
 import { useState } from "react";
@@ -11,8 +13,9 @@ import PropTypes from "prop-types";
 import { VUES, NAV_CONFIG, VUE_INITIALE } from "./config/navigation.config";
 import { BandeRepertoire } from "./components/BandeRepertoire";
 import { JeuCartes } from "./components/JeuCartes";
-import { TableauDeBord, EvaluationFormative } from "./components/placeholders";
+import { TableauDeBord } from "./components/placeholders";
 import { ModelageInteractif } from "./components/ModelageInteractif";
+import { BilanS6 } from "./components/EvaluationFormative";
 
 // ── Vues disponibles ──────────────────────────────────────────────────────────
 
@@ -185,7 +188,11 @@ export default function App() {
                     </div>
                 );
             case VUES.EVALUATION:
-                return <EvaluationFormative />;
+                return (
+                    <div className="max-w-5xl mx-auto p-6">
+                        <BilanS6 />
+                    </div>
+                );
             default:
                 return <TableauDeBord />;
         }
