@@ -14,21 +14,11 @@
  */
 
 import { useState, useCallback, useMemo } from "react";
-import { FRACTIONS, getFractionById } from "../../config/fractions.config";
-import {
-    TYPE_CARTE,
-    PROFILS_PAIRES,
-    PROFIL,
-    CARTE_UN,
-} from "../../config/jeu.config";
+import { PROFIL } from "../../config/jeu.config";
+import { genererCartes, etatsInitiaux } from "./jeu.utils";
 
 /**
- * @typedef {Object} CarteJeu
- * @property {string}  id           - Identifiant unique dans le jeu (ex. "1-4_image")
- * @property {string}  fractionId   - Clé de paire (ex. "1-4", ou "un")
- * @property {'image'|'lettres'} type
- * @property {string}  nomLettres   - Nom affiché
- * @property {number}  denominateur - Pour le rendu SVG
+ * @typedef {import('./jeu.utils').CarteJeu} CarteJeu
  */
 
 /**
@@ -44,74 +34,6 @@ import {
  */
 
 /**
- * Génère la liste de CarteJeu pour un profil donné.
- * Les cartes sont mélangées (Fisher-Yates).
- *
- * @param {string} profil - Valeur de PROFIL
- * @returns {CarteJeu[]}
- */
-function genererCartes(profil) {
-    const config = PROFILS_PAIRES[profil] ?? PROFILS_PAIRES[PROFIL.STANDARD];
-    const cartes = [];
-
-    // Fractions du profil
-    for (const fractionId of config.fractionsIds) {
-        const fraction = getFractionById(fractionId);
-        if (!fraction) continue;
-
-        cartes.push({
-            id: `${fractionId}_image`,
-            fractionId,
-            type: TYPE_CARTE.IMAGE,
-            nomLettres: fraction.nomLettres,
-            denominateur: fraction.denominateur,
-        });
-        cartes.push({
-            id: `${fractionId}_lettres`,
-            fractionId,
-            type: TYPE_CARTE.LETTRES,
-            nomLettres: fraction.nomLettres,
-            denominateur: fraction.denominateur,
-        });
-    }
-
-    // Carte "un" (le tout) — si activée dans ce profil
-    if (config.avecCarteUn) {
-        cartes.push({
-            id: "un_image",
-            fractionId: CARTE_UN.id,
-            type: TYPE_CARTE.IMAGE,
-            nomLettres: CARTE_UN.nomLettres,
-            denominateur: CARTE_UN.denominateur,
-        });
-        cartes.push({
-            id: "un_lettres",
-            fractionId: CARTE_UN.id,
-            type: TYPE_CARTE.LETTRES,
-            nomLettres: CARTE_UN.nomLettres,
-            denominateur: CARTE_UN.denominateur,
-        });
-    }
-
-    // Mélange Fisher-Yates
-    for (let i = cartes.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [cartes[i], cartes[j]] = [cartes[j], cartes[i]];
-    }
-
-    return cartes;
-}
-
-/**
- * Construit l'état initial des cartes (toutes neutres).
- * @param {CarteJeu[]} cartes
- * @returns {Record<string, string>}
- */
-function etatsInitiaux(cartes) {
-    return Object.fromEntries(cartes.map((c) => [c.id, "neutre"]));
-}
-
-/**
  * Hook de logique du jeu de paires — session A (cartes visibles).
  *
  * @param {{ profil?: string }} [options]
@@ -124,7 +46,9 @@ export function useJeuPaires({ profil = PROFIL.STANDARD } = {}) {
     const cartesInitiales = useMemo(() => genererCartes(profil), [profil]);
 
     const [cartes] = useState(cartesInitiales);
-    const [etats, setEtats] = useState(() => etatsInitiaux(cartesInitiales));
+    const [etats, setEtats] = useState(() =>
+        etatsInitiaux(cartesInitiales, "neutre")
+    );
     const [selection, setSelection] = useState([]);
     const [pairesOk, setPairesOk] = useState(0);
     const [essais, setEssais] = useState(0);
@@ -214,7 +138,7 @@ export function useJeuPaires({ profil = PROFIL.STANDARD } = {}) {
     const reinitialiser = useCallback(() => {
         // On force un nouveau mélange en réinitialisant via le state
         const nouvellesCartes = genererCartes(profil);
-        setEtats(etatsInitiaux(nouvellesCartes));
+        setEtats(etatsInitiaux(nouvellesCartes, "neutre"));
         setSelection([]);
         setPairesOk(0);
         setEssais(0);

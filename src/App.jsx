@@ -10,7 +10,7 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import { VUES, NAV_CONFIG, VUE_INITIALE } from "./config/navigation.config";
 import { BandeRepertoire } from "./components/BandeRepertoire";
-import { JeuPaires } from "./components/JeuCartes";
+import { JeuCartes } from "./components/JeuCartes";
 import {
     TableauDeBord,
     ModelageInteractif,
@@ -74,12 +74,12 @@ VueBandeRepertoire.propTypes = {
 // ── Vue M2 ────────────────────────────────────────────────────────────────────
 
 /**
- * Vue M2 — Jeu de cartes, session A (cartes visibles).
+ * Vue M2 — Jeu de cartes, sessions A et B (sprint 3).
  */
 function VueJeuCartes() {
     return (
         <div className="max-w-3xl mx-auto p-6">
-            <JeuPaires />
+            <JeuCartes />
         </div>
     );
 }
