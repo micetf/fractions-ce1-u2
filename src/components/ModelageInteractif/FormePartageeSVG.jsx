@@ -6,17 +6,20 @@
  *   2. PARTAGE — forme divisée en N parts égales, sans coloriage
  *   3. COLORIE — forme divisée, une part coloriée
  *
- * Formes disponibles (fiche S1, matériel) :
- *   - carre    : carré découpé par pliage horizontal/vertical
- *   - rectangle: rectangle découpé en bandes
- *   - disque   : disque en secteurs (comme une part de camembert)
- *   - eventail : demi-disque ("éventail") en secteurs — LE TOUT est le demi-disque entier
+ * Formes disponibles :
+ *   - carre     : carré découpé par pliage (S1)
+ *   - rectangle : rectangle découpé en bandes (S1, S3)
+ *   - disque    : disque en secteurs (S1, S3)
+ *   - eventail  : demi-disque (S1) — LE TOUT est le demi-disque entier
+ *   - hexagone  : hexagone régulier en 6 triangles équilatéraux (S3)
+ *                 enjeu didactique S3 : 1/3 = 2 triangles = 2 sixièmes
  *
- * Dénominateurs S1 : 2, 4, 8 (fractions 1/2, 1/4, 1/8).
+ * Dénominateurs S1 : 2, 4, 8 — Dénominateurs S3 : 3, 6
  *
  * ⚠️ Grilles carré/rectangle : orientation choisie par cohérence visuelle
- *    (pliage bord à bord, fiche S1 phase ②). Non prescrite au pixel près
- *    par la fiche — les formes physiques admettent plusieurs orientations.
+ *    (pliage bord à bord, fiche S1 phase ②). Non prescrite au pixel près.
+ * ⚠️ Hexagone : sommet en haut (pointe vers le haut), 6 triangles depuis
+ *    le centre. Pour denominateur=3, groupes de 2 triangles adjacents.
  */
 
 import PropTypes from "prop-types";
@@ -40,7 +43,7 @@ const C = {
  */
 const GRILLES = {
     carre: { 2: [2, 1], 4: [2, 2], 8: [2, 4] },
-    rectangle: { 2: [1, 2], 4: [1, 4], 8: [2, 4] },
+    rectangle: { 2: [1, 2], 3: [1, 3], 4: [1, 4], 6: [1, 6], 8: [2, 4] },
 };
 
 /**
@@ -345,10 +348,154 @@ function EventailSVG({ denominateur, etat, partColoriee, taille }) {
     );
 }
 
+/**
+ * Calcule les sommets d'un hexagone régulier (pointe en haut).
+ * @param {number} cx  Centre x
+ * @param {number} cy  Centre y
+ * @param {number} r   Rayon (centre → sommet)
+ * @returns {Array<[number, number]>} 6 sommets dans le sens horaire
+ */
+function sommetsHexagone(cx, cy, r) {
+    return Array.from({ length: 6 }, (_, i) => {
+        // Pointe en haut : décalage de -π/2
+        const a = -Math.PI / 2 + (2 * Math.PI * i) / 6;
+        return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+    });
+}
+
+/**
+ * Chemin SVG d'un triangle équilatéral (centre → sommet i → sommet i+1).
+ * @param {number} cx  Centre x
+ * @param {number} cy  Centre y
+ * @param {Array<[number,number]>} sommets
+ * @param {number} i   Index du triangle (0–5)
+ * @returns {string}
+ */
+function pathTriangle(cx, cy, sommets, i) {
+    const [x1, y1] = sommets[i];
+    const [x2, y2] = sommets[(i + 1) % 6];
+    return `M ${cx.toFixed(3)},${cy.toFixed(3)} L ${x1.toFixed(3)},${y1.toFixed(3)} L ${x2.toFixed(3)},${y2.toFixed(3)} Z`;
+}
+
+/**
+ * Rendu SVG pour hexagone régulier.
+ *
+ * Enjeu didactique S3 (fiche S3, phase ② et ④ point 2) :
+ *   L'hexagone est naturellement composé de 6 triangles équilatéraux.
+ *   Pour denominateur=6 → 1 triangle colorié = 1 sixième.
+ *   Pour denominateur=3 → 2 triangles adjacents colorés = 1 tiers.
+ *   Relation : 1 tiers = 2 sixièmes du même hexagone.
+ *
+ * @param {{ denominateur: 3|6, etat: string, partColoriee: number, taille: number }} props
+ */
+function HexagoneSVG({ denominateur, etat, partColoriee, taille }) {
+    const SIZE = 110;
+    const cx = 55,
+        cy = 55,
+        r = 48;
+    const sommets = sommetsHexagone(cx, cy, r);
+
+    // Contour extérieur (polygon)
+    const pointsPoly = sommets
+        .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
+        .join(" ");
+
+    if (etat === "tout") {
+        return (
+            <svg
+                width={taille}
+                height={taille}
+                viewBox={`0 0 ${SIZE} ${SIZE}`}
+                role="img"
+                aria-label="Hexagone entier — le tout"
+            >
+                <polygon
+                    points={pointsPoly}
+                    fill={C.fondTout}
+                    stroke={C.bordTout}
+                    strokeWidth={2}
+                />
+            </svg>
+        );
+    }
+
+    // Pour denominateur=3 : les 6 triangles sont groupés en 3 paires
+    // Part 0 = triangles 0,1 | Part 1 = triangles 2,3 | Part 2 = triangles 4,5
+    // Pour denominateur=6 : chaque triangle est une part indépendante
+    const trianglesColories = new Set();
+    if (etat === "colorie") {
+        if (denominateur === 6) {
+            trianglesColories.add(partColoriee % 6);
+        } else {
+            // denominateur=3 : groupe de 2 triangles adjacents
+            const groupe = partColoriee % 3;
+            trianglesColories.add(groupe * 2);
+            trianglesColories.add(groupe * 2 + 1);
+        }
+    }
+
+    return (
+        <svg
+            width={taille}
+            height={taille}
+            viewBox={`0 0 ${SIZE} ${SIZE}`}
+            role="img"
+            aria-label={`Hexagone partagé en ${denominateur} parts`}
+        >
+            {/* Les 6 triangles */}
+            {Array.from({ length: 6 }, (_, i) => (
+                <path
+                    key={i}
+                    d={pathTriangle(cx, cy, sommets, i)}
+                    fill={
+                        trianglesColories.has(i) ? C.partColoriee : C.partNeutre
+                    }
+                    stroke={C.bordDiv}
+                    strokeWidth={0.8}
+                />
+            ))}
+            {/* Contour extérieur */}
+            <polygon
+                points={pointsPoly}
+                fill="none"
+                stroke={C.bordForme}
+                strokeWidth={1.5}
+            />
+            {/* Rayons visibles uniquement en état partage (denomination=3 : 3 rayons alternés) */}
+            {etat === "partage" && denominateur === 3 && (
+                <>
+                    {[0, 2, 4].map((i) => {
+                        const [x, y] = sommets[i];
+                        return (
+                            <line
+                                key={i}
+                                x1={cx}
+                                y1={cy}
+                                x2={x.toFixed(2)}
+                                y2={y.toFixed(2)}
+                                stroke={C.bordForme}
+                                strokeWidth={1}
+                                strokeDasharray="3,2"
+                            />
+                        );
+                    })}
+                </>
+            )}
+        </svg>
+    );
+}
+
+HexagoneSVG.propTypes = {
+    denominateur: PropTypes.oneOf([3, 6]).isRequired,
+    etat: PropTypes.oneOf(["tout", "partage", "colorie"]).isRequired,
+    partColoriee: PropTypes.number,
+    taille: PropTypes.number.isRequired,
+};
+
 // ── PropTypes internes ────────────────────────────────────────────────────────
 
 const sharedPropTypes = {
-    denominateur: PropTypes.oneOf([2, 4, 8]).isRequired,
+    denominateur: PropTypes.oneOf([2, 3, 4, 6, 8]).isRequired,
     etat: PropTypes.oneOf(["tout", "partage", "colorie"]).isRequired,
     partColoriee: PropTypes.number,
     taille: PropTypes.number.isRequired,
@@ -367,8 +514,8 @@ EventailSVG.propTypes = sharedPropTypes;
  * Forme géométrique partagée — dispatcher public.
  *
  * @param {Object}  props
- * @param {'carre'|'rectangle'|'disque'|'eventail'} props.forme
- * @param {2|4|8}   props.denominateur
+ * @param {'carre'|'rectangle'|'disque'|'eventail'|'hexagone'} props.forme
+ * @param {2|3|4|6|8} props.denominateur
  * @param {'tout'|'partage'|'colorie'} props.etat
  * @param {number}  [props.partColoriee=0] - Index de la part à colorier (0-based)
  * @param {number}  [props.taille=120]     - Dimension de base en px
@@ -412,13 +559,28 @@ export default function FormePartageeSVG({
             />
         );
     }
+    if (forme === "hexagone") {
+        return (
+            <HexagoneSVG
+                denominateur={denominateur}
+                etat={etat}
+                partColoriee={partColoriee}
+                taille={taille}
+            />
+        );
+    }
     return null;
 }
 
 FormePartageeSVG.propTypes = {
-    forme: PropTypes.oneOf(["carre", "rectangle", "disque", "eventail"])
-        .isRequired,
-    denominateur: PropTypes.oneOf([2, 4, 8]).isRequired,
+    forme: PropTypes.oneOf([
+        "carre",
+        "rectangle",
+        "disque",
+        "eventail",
+        "hexagone",
+    ]).isRequired,
+    denominateur: PropTypes.oneOf([2, 3, 4, 6, 8]).isRequired,
     etat: PropTypes.oneOf(["tout", "partage", "colorie"]).isRequired,
     partColoriee: PropTypes.number,
     taille: PropTypes.number,

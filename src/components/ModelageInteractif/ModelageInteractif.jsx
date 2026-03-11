@@ -13,6 +13,7 @@
 
 import { useState } from "react";
 import ModelageS1 from "./ModelageS1";
+import ModelageS3 from "./ModelageS3";
 
 /** @type {Array<{ id: string, label: string, fractions: string, sprint: string, implemente: boolean }>} */
 const SEANCES_M1 = [
@@ -28,7 +29,7 @@ const SEANCES_M1 = [
         label: "Séance 3",
         fractions: "1/3, 1/6",
         sprint: "6",
-        implemente: false,
+        implemente: true,
     },
     {
         id: "S4",
@@ -105,6 +106,8 @@ export default function ModelageInteractif() {
             {seance?.implemente ? (
                 seanceActive === "S1" ? (
                     <ModelageS1 />
+                ) : seanceActive === "S3" ? (
+                    <ModelageS3 />
                 ) : (
                     <StubSeance seance={seance} />
                 )
