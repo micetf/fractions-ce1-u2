@@ -21,7 +21,7 @@
 
 import PropTypes from "prop-types";
 import { FRACTIONS } from "../../config/fractions.config";
-import FractionLigne from "../FractionLigne";
+import FractionLigne from "./FractionLigne";
 
 /**
  * Bande-répertoire interactive des fractions unitaires CE1.

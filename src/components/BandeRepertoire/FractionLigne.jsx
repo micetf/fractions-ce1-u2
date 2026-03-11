@@ -17,7 +17,7 @@
  */
 
 import PropTypes from "prop-types";
-import BandeSVG from "./BandeRepertoire/BandeSVG";
+import BandeSVG from "./BandeSVG";
 
 /**
  * Couleurs de badge par séance d'introduction.
