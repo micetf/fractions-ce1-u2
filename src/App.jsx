@@ -1,6 +1,7 @@
 /**
  * @fileoverview Composant racine — navigation par useState.
  *
+ * Sprint 12 : intégration de la Navbar écosystème micetf.fr.
  * Sprint 11 : M4 BilanS6 remplace le placeholder EvaluationFormative.
  * Sprint 2–10 : M2 JeuCartes (sessions A/B/C paires + triplets).
  * Sprint 1, 9 : M3 BandeRepertoire interactive.
@@ -16,6 +17,7 @@ import { JeuCartes } from "./components/JeuCartes";
 import { TableauDeBord } from "./components/placeholders";
 import { ModelageInteractif } from "./components/ModelageInteractif";
 import { BilanS6 } from "./components/EvaluationFormative";
+import Navbar from "./components/Navbar/Navbar";
 
 // ── Vues disponibles ──────────────────────────────────────────────────────────
 
@@ -61,37 +63,32 @@ function VueBandeRepertoire({ seanceDebloquee, onChangerSeance }) {
                                 : "bg-white text-slate-500 hover:bg-slate-200",
                         ].join(" ")}
                     >
-                        Élève (S6-C)
+                        Élève
                     </button>
                 </div>
 
-                {/* Contrôle de séance — masqué en mode élève (RF-M3-04) */}
+                {/* Sélecteur de séance (mode enseignant uniquement) */}
                 {!modeEleve && (
                     <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500 font-medium shrink-0">
-                            Séance débloquée :
+                        <span className="text-sm text-slate-600 font-medium">
+                            Séance :
                         </span>
                         <div className="flex gap-1">
-                            {[1, 2, 3, 4, 5, 6].map((n) => (
+                            {[1, 2, 3, 4, 5, 6].map((s) => (
                                 <button
-                                    key={n}
-                                    onClick={() => onChangerSeance(n)}
+                                    key={s}
+                                    onClick={() => onChangerSeance(s)}
                                     className={[
                                         "w-8 h-8 rounded text-sm font-semibold transition-colors",
-                                        seanceDebloquee === n
-                                            ? "bg-slate-700 text-white"
+                                        seanceDebloquee === s
+                                            ? "bg-blue-600 text-white"
                                             : "bg-white text-slate-500 hover:bg-slate-200",
                                     ].join(" ")}
                                 >
-                                    {n}
+                                    S{s}
                                 </button>
                             ))}
                         </div>
-                        {seanceDebloquee >= 5 && (
-                            <span className="text-xs text-blue-500 ml-1">
-                                ↳ Colonne « chiffres » visible
-                            </span>
-                        )}
                     </div>
                 )}
             </div>
@@ -112,7 +109,8 @@ VueBandeRepertoire.propTypes = {
 // ── Vue M2 ────────────────────────────────────────────────────────────────────
 
 /**
- * Vue M2 — Jeu de cartes, sessions A et B (sprint 3).
+ * Vue M2 — Jeu de cartes interactif.
+ * @returns {JSX.Element}
  */
 function VueJeuCartes() {
     return (
@@ -122,54 +120,25 @@ function VueJeuCartes() {
     );
 }
 
-// ── Navigation ────────────────────────────────────────────────────────────────
-
-/**
- * @param {{ vueActive: string, onNaviguer: (vue: string) => void }} props
- */
-function NavBar({ vueActive, onNaviguer }) {
-    return (
-        <nav className="bg-slate-800 text-white px-6 py-3 flex items-center gap-2">
-            <span className="font-semibold text-slate-300 text-sm mr-4 shrink-0">
-                Fractions CE1
-            </span>
-            <div className="flex gap-1 flex-wrap">
-                {Object.entries(NAV_CONFIG).map(([vue, { label, module }]) => (
-                    <button
-                        key={vue}
-                        onClick={() => onNaviguer(vue)}
-                        className={[
-                            "flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors",
-                            vueActive === vue
-                                ? "bg-blue-600 text-white"
-                                : "text-slate-400 hover:text-white hover:bg-slate-700",
-                        ].join(" ")}
-                    >
-                        <span className="text-xs font-mono opacity-60">
-                            {module}
-                        </span>
-                        {label}
-                    </button>
-                ))}
-            </div>
-        </nav>
-    );
-}
-
-NavBar.propTypes = {
-    vueActive: PropTypes.string.isRequired,
-    onNaviguer: PropTypes.func.isRequired,
-};
-
 // ── Composant racine ──────────────────────────────────────────────────────────
 
 /**
+ * Composant racine de l'application Fractions CE1.
+ *
+ * Orchestre la navigation inter-modules et délègue le rendu à chaque vue.
+ * La Navbar est fixée en haut (position: fixed) ; `pt-14` compense
+ * la hauteur de la barre (h-14 = 3.5 rem) pour éviter tout chevauchement.
+ *
  * @returns {JSX.Element}
  */
 export default function App() {
     const [vueActive, setVueActive] = useState(VUE_INITIALE);
     const [seanceDebloquee, setSeanceDebloquee] = useState(1);
 
+    /**
+     * Rendu conditionnel de la vue active.
+     * @returns {JSX.Element}
+     */
     function renderVue() {
         switch (vueActive) {
             case VUES.JEU_DE_CARTES:
@@ -200,8 +169,18 @@ export default function App() {
 
     return (
         <div className="min-h-screen flex flex-col bg-slate-50">
-            <NavBar vueActive={vueActive} onNaviguer={setVueActive} />
-            <main className="flex-1">{renderVue()}</main>
+            {/* Navbar fixe — identité visuelle micetf.fr */}
+            <Navbar
+                vueActive={vueActive}
+                onNaviguer={setVueActive}
+                // onAide={() => { /* TODO: ouvrir modale d'aide */ }}
+            />
+
+            {/*
+             * pt-14 : compense la hauteur fixe de la navbar (h-14 = 3.5 rem)
+             * afin que le contenu ne se retrouve pas masqué derrière elle.
+             */}
+            <main className="flex-1 pt-14">{renderVue()}</main>
         </div>
     );
 }
