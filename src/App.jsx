@@ -11,11 +11,8 @@ import PropTypes from "prop-types";
 import { VUES, NAV_CONFIG, VUE_INITIALE } from "./config/navigation.config";
 import { BandeRepertoire } from "./components/BandeRepertoire";
 import { JeuCartes } from "./components/JeuCartes";
-import {
-    TableauDeBord,
-    ModelageInteractif,
-    EvaluationFormative,
-} from "./components/placeholders";
+import { TableauDeBord, EvaluationFormative } from "./components/placeholders";
+import { ModelageInteractif } from "./components/ModelageInteractif";
 
 // ── Vues disponibles ──────────────────────────────────────────────────────────
 
@@ -144,7 +141,11 @@ export default function App() {
                     />
                 );
             case VUES.MODELAGE:
-                return <ModelageInteractif />;
+                return (
+                    <div className="max-w-4xl mx-auto p-6">
+                        <ModelageInteractif />
+                    </div>
+                );
             case VUES.EVALUATION:
                 return <EvaluationFormative />;
             default:
