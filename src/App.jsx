@@ -1,81 +1,147 @@
 /**
  * @fileoverview Composant racine — navigation par useState.
  *
- * Pas de react-router-dom : switch de vues par état React.
- * Voir src/config/navigation.config.js pour la justification.
+ * Sprint 1 : la vue M3 (bande-répertoire) est branchée sur le vrai composant.
+ * Les 4 autres vues restent sur leurs placeholders (sprints à venir).
  */
 
-import { useState } from 'react';
-import PropTypes from 'prop-types';
-import { VUES, NAV_CONFIG, VUE_INITIALE } from './config/navigation.config';
+import { useState } from "react";
+import PropTypes from "prop-types";
+import { VUES, NAV_CONFIG, VUE_INITIALE } from "./config/navigation.config";
+import { BandeRepertoire } from "./components/BandeRepertoire";
 import {
-  TableauDeBord,
-  ModelageInteractif,
-  JeuDeCartes,
-  BandeRepertoire,
-  EvaluationFormative,
-} from './components/placeholders';
+    TableauDeBord,
+    ModelageInteractif,
+    JeuDeCartes,
+    EvaluationFormative,
+} from "./components/placeholders";
 
-/** Correspondance vue → composant */
-const COMPOSANTS = {
-  [VUES.TABLEAU_DE_BORD]:  TableauDeBord,
-  [VUES.MODELAGE]:         ModelageInteractif,
-  [VUES.JEU_DE_CARTES]:    JeuDeCartes,
-  [VUES.BANDE_REPERTOIRE]: BandeRepertoire,
-  [VUES.EVALUATION]:       EvaluationFormative,
-};
+// ── Vues disponibles ──────────────────────────────────────────────────────────
 
 /**
- * Barre de navigation horizontale.
- * Temporaire — intégrée dans M0 au sprint 13.
+ * Vue M3 — Bande-répertoire avec sélecteur de séance.
+ *
+ * Le sélecteur (1–6) simule l'avancement dans la séquence.
+ * En production, seanceDebloquee sera géré dans un contexte global
+ * ou persisté (sprint à préciser).
+ *
+ * @param {Object} props
+ * @param {number} props.seanceDebloquee
+ * @param {(n: number) => void} props.onChangerSeance
+ */
+function VueBandeRepertoire({ seanceDebloquee, onChangerSeance }) {
+    return (
+        <div className="max-w-2xl mx-auto p-6 space-y-6">
+            {/* Contrôle de séance — pour tester le déverrouillage progressif */}
+            <div className="flex items-center gap-3 p-3 bg-slate-100 rounded-lg">
+                <span className="text-sm text-slate-600 font-medium shrink-0">
+                    Séance débloquée :
+                </span>
+                <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5, 6].map((n) => (
+                        <button
+                            key={n}
+                            onClick={() => onChangerSeance(n)}
+                            className={[
+                                "w-8 h-8 rounded text-sm font-semibold transition-colors",
+                                seanceDebloquee === n
+                                    ? "bg-slate-700 text-white"
+                                    : "bg-white text-slate-500 hover:bg-slate-200",
+                            ].join(" ")}
+                        >
+                            {n}
+                        </button>
+                    ))}
+                </div>
+                <span className="text-xs text-slate-400 ml-2">
+                    {seanceDebloquee >= 5
+                        ? "↳ Colonne « chiffres » visible"
+                        : ""}
+                </span>
+            </div>
+
+            <BandeRepertoire seanceDebloquee={seanceDebloquee} />
+        </div>
+    );
+}
+
+VueBandeRepertoire.propTypes = {
+    seanceDebloquee: PropTypes.number.isRequired,
+    onChangerSeance: PropTypes.func.isRequired,
+};
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+
+/**
  * @param {{ vueActive: string, onNaviguer: (vue: string) => void }} props
  */
 function NavBar({ vueActive, onNaviguer }) {
-  return (
-    <nav className="bg-slate-800 text-white px-6 py-3 flex items-center gap-2">
-      <span className="font-semibold text-slate-300 text-sm mr-4 shrink-0">
-        Fractions CE1
-      </span>
-      <div className="flex gap-1 flex-wrap">
-        {Object.entries(NAV_CONFIG).map(([vue, { label, module }]) => (
-          <button
-            key={vue}
-            onClick={() => onNaviguer(vue)}
-            className={[
-              'flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors',
-              vueActive === vue
-                ? 'bg-blue-600 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700',
-            ].join(' ')}
-          >
-            <span className="text-xs font-mono opacity-60">{module}</span>
-            {label}
-          </button>
-        ))}
-      </div>
-    </nav>
-  );
+    return (
+        <nav className="bg-slate-800 text-white px-6 py-3 flex items-center gap-2">
+            <span className="font-semibold text-slate-300 text-sm mr-4 shrink-0">
+                Fractions CE1
+            </span>
+            <div className="flex gap-1 flex-wrap">
+                {Object.entries(NAV_CONFIG).map(([vue, { label, module }]) => (
+                    <button
+                        key={vue}
+                        onClick={() => onNaviguer(vue)}
+                        className={[
+                            "flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors",
+                            vueActive === vue
+                                ? "bg-blue-600 text-white"
+                                : "text-slate-400 hover:text-white hover:bg-slate-700",
+                        ].join(" ")}
+                    >
+                        <span className="text-xs font-mono opacity-60">
+                            {module}
+                        </span>
+                        {label}
+                    </button>
+                ))}
+            </div>
+        </nav>
+    );
 }
 
 NavBar.propTypes = {
-  vueActive:  PropTypes.string.isRequired,
-  onNaviguer: PropTypes.func.isRequired,
+    vueActive: PropTypes.string.isRequired,
+    onNaviguer: PropTypes.func.isRequired,
 };
 
+// ── Composant racine ──────────────────────────────────────────────────────────
+
 /**
- * Composant racine de l'application.
  * @returns {JSX.Element}
  */
 export default function App() {
-  const [vueActive, setVueActive] = useState(VUE_INITIALE);
-  const Composant = COMPOSANTS[vueActive];
+    const [vueActive, setVueActive] = useState(VUE_INITIALE);
+    const [seanceDebloquee, setSeanceDebloquee] = useState(1);
 
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <NavBar vueActive={vueActive} onNaviguer={setVueActive} />
-      <main className="flex-1">
-        <Composant />
-      </main>
-    </div>
-  );
+    function renderVue() {
+        switch (vueActive) {
+            case VUES.BANDE_REPERTOIRE:
+                return (
+                    <VueBandeRepertoire
+                        seanceDebloquee={seanceDebloquee}
+                        onChangerSeance={setSeanceDebloquee}
+                    />
+                );
+            case VUES.MODELAGE:
+                return <ModelageInteractif />;
+            case VUES.JEU_DE_CARTES:
+                return <JeuDeCartes />;
+            case VUES.EVALUATION:
+                return <EvaluationFormative />;
+            default:
+                return <TableauDeBord />;
+        }
+    }
+
+    return (
+        <div className="min-h-screen flex flex-col bg-slate-50">
+            <NavBar vueActive={vueActive} onNaviguer={setVueActive} />
+            <main className="flex-1">{renderVue()}</main>
+        </div>
+    );
 }
