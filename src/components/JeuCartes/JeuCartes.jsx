@@ -4,7 +4,7 @@
  * Orchestre les 3 sessions du jeu de cartes (S2) :
  *   Session A — Appariement (cartes visibles)           sprint 2 ✅
  *   Session B — Memory (cartes retournées)              sprint 3 ✅
- *   Session C — Autocorrectif + trace écrite            sprint 4
+ *   Session C — Autocorrectif + trace écrite            sprint 4 ✅
  *
  * Source : fiche S2, structure générale —
  *   « Cette séance est découpée en trois sessions courtes de 15 minutes,
@@ -17,6 +17,7 @@ import { useState } from "react";
 import { SESSION, SESSIONS_CONFIG } from "../../config/jeu.config";
 import JeuPaires from "./JeuPaires";
 import JeuMemory from "./JeuMemory";
+import JeuAutocorrectif from "./JeuAutocorrectif";
 
 /**
  * Onglet de sélection de session.
@@ -60,7 +61,7 @@ export default function JeuCartes() {
     const sessionsDisponibles = {
         [SESSION.A]: true,
         [SESSION.B]: true,
-        [SESSION.C]: false, // sprint 4
+        [SESSION.C]: true,
     };
 
     return (
@@ -81,11 +82,7 @@ export default function JeuCartes() {
             {/* ── Contenu de la session active ── */}
             {sessionActive === SESSION.A && <JeuPaires />}
             {sessionActive === SESSION.B && <JeuMemory />}
-            {sessionActive === SESSION.C && (
-                <div className="text-center py-8 text-slate-400 text-sm">
-                    Session 3 — Autocorrectif disponible au sprint 4.
-                </div>
-            )}
+            {sessionActive === SESSION.C && <JeuAutocorrectif />}
         </div>
     );
 }

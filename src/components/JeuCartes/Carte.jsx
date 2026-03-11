@@ -11,14 +11,14 @@
  *   'incorrecte'  — paire refusée, bref retour visuel puis retour en 'neutre'
  *
  * Carte spéciale "un" (le tout) :
- *   denominateur=1 → affiche la forme entière sans division.
+ *   fractionId='un' → affiche la forme entière sans division via ImageFraction.
  *   Source : fiche S2 matériel — « cartes-lettres : "un demi", "un quart",
  *   "un huitième", "un" ».
  */
 
 import PropTypes from "prop-types";
 import { TYPE_CARTE } from "../../config/jeu.config";
-import { FormeImage } from "../FormesSVG";
+import ImageFraction from "./ImageFraction";
 
 /**
  * @typedef {'neutre'|'selectionnee'|'correcte'|'incorrecte'} EtatCarte
@@ -46,7 +46,6 @@ const STYLES_ETAT = {
  *                                          ou "un" pour la carte du tout
  * @param {'image'|'lettres'} props.type  - Type de carte
  * @param {string}     props.nomLettres   - Nom en lettres (ex. "un quart")
- * @param {number}     props.denominateur - Nombre de parts (1 pour le tout)
  * @param {EtatCarte}  [props.etat]       - État visuel de la carte
  * @param {Function}   [props.onClick]    - Callback appelé au clic (si la carte est cliquable)
  * @param {number}     [props.taille]     - Taille (px) du SVG pour les cartes-image
@@ -57,7 +56,6 @@ export default function Carte({
     fractionId,
     type,
     nomLettres,
-    denominateur,
     etat = "neutre",
     onClick,
     taille = 72,
@@ -109,7 +107,6 @@ export default function Carte({
             {type === TYPE_CARTE.IMAGE ? (
                 <ContenuImage
                     fractionId={fractionId}
-                    denominateur={denominateur}
                     taille={taille}
                     grise={etat === "incorrecte"}
                 />
@@ -129,50 +126,16 @@ export default function Carte({
 
 /**
  * Contenu d'une carte de type "image".
- * Gère le cas spécial denominateur=1 (carte "un" = le tout).
+ * Délègue à ImageFraction qui gère le cas spécial 'un'.
  */
-function ContenuImage({ fractionId, denominateur, taille, grise }) {
-    // Cas spécial : la carte "un" = le tout = forme entière coloriée
-    if (denominateur === 1 || fractionId === "un") {
-        return <CarteUn taille={taille} grise={grise} />;
-    }
-    return <FormeImage fractionId={fractionId} taille={taille} grise={grise} />;
+function ContenuImage({ fractionId, taille, grise }) {
+    return (
+        <ImageFraction fractionId={fractionId} taille={taille} grise={grise} />
+    );
 }
 
 ContenuImage.propTypes = {
     fractionId: PropTypes.string.isRequired,
-    denominateur: PropTypes.number.isRequired,
-    taille: PropTypes.number.isRequired,
-    grise: PropTypes.bool,
-};
-
-/**
- * Représentation de "un" (le tout) : carré entier colorié.
- * Aucune division — la forme complète représente l'entier 1.
- */
-function CarteUn({ taille, grise }) {
-    const couleur = grise ? "#cbd5e1" : "#2563eb";
-    return (
-        <svg
-            width={taille}
-            height={taille}
-            viewBox={`0 0 ${taille} ${taille}`}
-            aria-label="Forme entière coloriée — le tout (un)"
-            role="img"
-        >
-            <rect
-                x={2}
-                y={2}
-                width={taille - 4}
-                height={taille - 4}
-                fill={couleur}
-                rx={4}
-            />
-        </svg>
-    );
-}
-
-CarteUn.propTypes = {
     taille: PropTypes.number.isRequired,
     grise: PropTypes.bool,
 };
@@ -213,7 +176,6 @@ Carte.propTypes = {
     fractionId: PropTypes.string.isRequired,
     type: PropTypes.oneOf([TYPE_CARTE.IMAGE, TYPE_CARTE.LETTRES]).isRequired,
     nomLettres: PropTypes.string.isRequired,
-    denominateur: PropTypes.number.isRequired,
     etat: PropTypes.oneOf(["neutre", "selectionnee", "correcte", "incorrecte"]),
     onClick: PropTypes.func,
     taille: PropTypes.number,
