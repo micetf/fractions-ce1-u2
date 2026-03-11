@@ -14,7 +14,7 @@
  *   - hexagone  : hexagone régulier en 6 triangles équilatéraux (S3)
  *                 enjeu didactique S3 : 1/3 = 2 triangles = 2 sixièmes
  *
- * Dénominateurs S1 : 2, 4, 8 — Dénominateurs S3 : 3, 6
+ * Dénominateurs S1 : 2, 4, 8 — Dénominateurs S3 : 3, 6 — Dénominateurs S4 : 5, 10
  *
  * ⚠️ Grilles carré/rectangle : orientation choisie par cohérence visuelle
  *    (pliage bord à bord, fiche S1 phase ②). Non prescrite au pixel près.
@@ -43,7 +43,15 @@ const C = {
  */
 const GRILLES = {
     carre: { 2: [2, 1], 4: [2, 2], 8: [2, 4] },
-    rectangle: { 2: [1, 2], 3: [1, 3], 4: [1, 4], 6: [1, 6], 8: [2, 4] },
+    rectangle: {
+        2: [1, 2],
+        3: [1, 3],
+        4: [1, 4],
+        5: [1, 5],
+        6: [1, 6],
+        8: [2, 4],
+        10: [2, 5],
+    },
 };
 
 /**
@@ -495,7 +503,7 @@ HexagoneSVG.propTypes = {
 // ── PropTypes internes ────────────────────────────────────────────────────────
 
 const sharedPropTypes = {
-    denominateur: PropTypes.oneOf([2, 3, 4, 6, 8]).isRequired,
+    denominateur: PropTypes.oneOf([2, 3, 4, 5, 6, 8, 10]).isRequired,
     etat: PropTypes.oneOf(["tout", "partage", "colorie"]).isRequired,
     partColoriee: PropTypes.number,
     taille: PropTypes.number.isRequired,
@@ -580,7 +588,7 @@ FormePartageeSVG.propTypes = {
         "eventail",
         "hexagone",
     ]).isRequired,
-    denominateur: PropTypes.oneOf([2, 3, 4, 6, 8]).isRequired,
+    denominateur: PropTypes.oneOf([2, 3, 4, 5, 6, 8, 10]).isRequired,
     etat: PropTypes.oneOf(["tout", "partage", "colorie"]).isRequired,
     partColoriee: PropTypes.number,
     taille: PropTypes.number,
