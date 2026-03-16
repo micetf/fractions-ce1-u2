@@ -13,10 +13,15 @@
  *   - Fiche S6, section « Bilan de séquence — session C »
  *   - RF-M4-06 à RF-M4-09 (SRS, section 4.5.2)
  *
- * Sprint 12 : ajout des observables formatifs S1–S6 (RF-M4-01 à RF-M4-05).
+ * Migration sprint 13a :
+ *   - useBilanS6 délègue désormais la liste d'élèves à useClasse (persistance).
+ *   - reinitialiser() → reinitialiserResultats() : ne touche plus la liste.
+ *   - Ajout d'un useEffect pour la sélection automatique du premier élève :
+ *     nécessaire car ajouterEleve() ne connaît plus l'id généré au moment
+ *     de l'appel (id généré dans useClasse, inconnu du hook consommateur).
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBilanS6 } from "./useBilanS6";
 import GestionClasse from "./GestionClasse";
 import SaisieAutoEval from "./SaisieAutoEval";
@@ -47,10 +52,25 @@ export default function BilanS6() {
         syntheses,
         alerteCollective,
         nbElevesComplets,
-        reinitialiser,
+        reinitialiserResultats,
     } = useBilanS6();
 
-    /** Passe à l'élève suivant dans la liste (pour la navigation séquentielle). */
+    /**
+     * Sélection automatique du premier élève.
+     *
+     * Depuis la migration sprint 13a, ajouterEleve() ne peut plus sélectionner
+     * automatiquement l'élève ajouté (l'id est généré dans useClasse, hors
+     * portée du callback). Ce useEffect compense ce comportement :
+     * dès qu'un premier élève apparaît et qu'aucune sélection n'est active,
+     * on sélectionne le dernier ajouté (fin du tableau).
+     */
+    useEffect(() => {
+        if (eleveSelectionne === null && eleves.length > 0) {
+            selectionnerEleve(eleves[eleves.length - 1].id);
+        }
+    }, [eleves, eleveSelectionne, selectionnerEleve]);
+
+    /** Passe à l'élève suivant dans la liste (navigation séquentielle). */
     function allerEleveSuivant() {
         if (!eleveSelectionne || eleves.length === 0) return;
         const idx = eleves.findIndex((e) => e.id === eleveSelectionne);
@@ -120,17 +140,14 @@ export default function BilanS6() {
             {onglet === ONGLETS.SAISIE ? (
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
                     {/* Panneau gauche : liste des élèves */}
-                    <div
-                        className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm
-            self-start"
-                    >
+                    <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm self-start">
                         <GestionClasse
                             eleves={eleves}
                             eleveSelectionne={eleveSelectionne}
                             onAjouter={ajouterEleve}
                             onSupprimer={supprimerEleve}
                             onSelectionner={selectionnerEleve}
-                            onReinitialiser={reinitialiser}
+                            onReinitialiser={reinitialiserResultats}
                         />
                     </div>
 
@@ -147,10 +164,7 @@ export default function BilanS6() {
                                 aSuivant={aSuivant}
                             />
                         ) : (
-                            <div
-                                className="flex flex-col items-center justify-center h-full
-                min-h-50 gap-3 text-center"
-                            >
+                            <div className="flex flex-col items-center justify-center h-full min-h-50 gap-3 text-center">
                                 <span className="text-4xl">👈</span>
                                 <p className="text-slate-400 text-sm">
                                     {eleves.length === 0
@@ -177,9 +191,8 @@ export default function BilanS6() {
 
             {/* ── Note de bas de page ── */}
             <p className="text-xs text-slate-400 text-center pb-2">
-                Sprint 11 — Bilan S6 (RF-M4-06 à RF-M4-09). Les observables
-                formatifs S1–S6 (RF-M4-01 à RF-M4-05) seront ajoutés en sprint
-                12.
+                Sprint 13a — Bilan S6 migré vers persistance localStorage
+                (RF-M4-01 à RF-M4-09).
             </p>
         </div>
     );
