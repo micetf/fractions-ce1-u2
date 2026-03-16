@@ -1,8 +1,12 @@
 /**
  * @fileoverview TableauDeBord — module M0, vue d'ensemble de la séquence.
  *
- * Vue affichée au démarrage de l'application.
+ * Enrichissement UX : chaque carte séance affiche désormais
+ *   - le type d'utilisateur (enseignant / élèves / les deux)
+ *   - les modules actifs pour cette séance, cliquables pour navigation directe
+ *
  * Sources : RF-M0-01 à RF-M0-04 (SRS, section 4.1)
+ *           Tableau de correspondance séances × modules (SRS, section 3)
  */
 
 import PropTypes from "prop-types";
@@ -19,7 +23,70 @@ function resoudreFractions(fractionsIds) {
         .join(", ");
 }
 
-// ── Constantes visuelles ──────────────────────────────────────────────────────
+// ── Données pédagogiques par séance ──────────────────────────────────────────
+// Source : SRS section 3 — tableau Architecture fonctionnelle.
+
+/**
+ * Pour chaque séance : utilisateur principal et modules numériques actifs.
+ * L'ordre des vues détermine l'ordre des badges dans la carte.
+ *
+ * @type {Record<string, { utilisateur: string, vues: string[] }>}
+ */
+const SEANCES_MODULES = {
+    S1: { utilisateur: "Enseignant", vues: [VUES.MODELAGE, VUES.EVALUATION] },
+    S2: { utilisateur: "Élèves", vues: [VUES.JEU_DE_CARTES, VUES.EVALUATION] },
+    S3: { utilisateur: "Enseignant", vues: [VUES.MODELAGE, VUES.EVALUATION] },
+    S4: {
+        utilisateur: "Enseignant",
+        vues: [VUES.MODELAGE, VUES.BANDE_REPERTOIRE, VUES.EVALUATION],
+    },
+    S5: {
+        utilisateur: "Enseignant",
+        vues: [VUES.MODELAGE, VUES.BANDE_REPERTOIRE, VUES.EVALUATION],
+    },
+    S6: {
+        utilisateur: "Élèves · Enseignant",
+        vues: [VUES.JEU_DE_CARTES, VUES.BANDE_REPERTOIRE, VUES.EVALUATION],
+    },
+};
+
+/**
+ * Apparence des badges de module — cohérents avec les couleurs du hub M1–M4.
+ * @type {Record<string, { label: string, classes: string }>}
+ */
+const VUE_MODULE_CONFIG = {
+    [VUES.MODELAGE]: {
+        label: "M1",
+        classes: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
+    },
+    [VUES.JEU_DE_CARTES]: {
+        label: "M2",
+        classes:
+            "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+    },
+    [VUES.BANDE_REPERTOIRE]: {
+        label: "M3",
+        classes:
+            "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100",
+    },
+    [VUES.EVALUATION]: {
+        label: "M4",
+        classes:
+            "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100",
+    },
+};
+
+/**
+ * Apparence du badge utilisateur selon le public de la séance.
+ * @type {Record<string, string>}
+ */
+const UTILISATEUR_CLASSES = {
+    Enseignant: "bg-slate-100 text-slate-600",
+    Élèves: "bg-teal-50 text-teal-700",
+    "Élèves · Enseignant": "bg-slate-100 text-slate-600",
+};
+
+// ── Constantes visuelles séances ─────────────────────────────────────────────
 
 const COULEURS_SEANCE = {
     S1: {
@@ -106,6 +173,9 @@ const MODULES_NAV = [
 
 // ── Sous-composants ───────────────────────────────────────────────────────────
 
+/**
+ * Badge complétion observables (RF-M0-03).
+ */
 function BadgeCompletion({ etat }) {
     const ui = COMPLETION_UI[etat] ?? COMPLETION_UI.non_commence;
     return (
@@ -122,50 +192,97 @@ BadgeCompletion.propTypes = {
     etat: PropTypes.oneOf(["non_commence", "en_cours", "complet"]).isRequired,
 };
 
-function CarteSeance({ seance, completion }) {
+/**
+ * Carte d'une séance (RF-M0-01 + RF-M0-03).
+ * Les badges de module permettent la navigation directe (RF-M0-02).
+ */
+function CarteSeance({ seance, completion, onNaviguer }) {
     const couleurs = COULEURS_SEANCE[seance.id] ?? COULEURS_SEANCE.S1;
     const fractions = resoudreFractions(seance.fractionsIds);
     const formatLabel = seance.format === "distribué" ? "3 × 15 min" : "Bloc";
+    const info = SEANCES_MODULES[seance.id];
 
     return (
         <div
             className={`bg-white border-2 ${couleurs.bordure} rounded-2xl p-4
-            space-y-3 shadow-sm`}
+            space-y-3 shadow-sm flex flex-col`}
         >
+            {/* ── En-tête : séance, format, utilisateur, durée ── */}
             <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-2xl font-black ${couleurs.titre}`}>
                         {seance.id}
                     </span>
                     <span
-                        className={`text-xs font-semibold px-2 py-0.5 rounded-full ${couleurs.badge}`}
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-full
+                        ${couleurs.badge}`}
                     >
                         {formatLabel}
                     </span>
+                    {info && (
+                        <span
+                            className={`text-xs font-medium px-2 py-0.5 rounded-full
+                            ${UTILISATEUR_CLASSES[info.utilisateur] ?? "bg-slate-100 text-slate-600"}`}
+                        >
+                            {info.utilisateur}
+                        </span>
+                    )}
                 </div>
                 <span className="text-xs text-slate-500 font-medium shrink-0">
                     {seance.duree}
                 </span>
             </div>
-            <p className="text-sm font-semibold text-slate-700 leading-snug">
+
+            {/* ── Titre ── */}
+            <p className="text-sm font-semibold text-slate-700 leading-snug flex-1">
                 {seance.titre}
             </p>
+
+            {/* ── Fractions ciblées ── */}
             <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs text-slate-400">Fractions :</span>
                 <span className="text-xs font-mono font-semibold text-slate-600">
                     {fractions}
                 </span>
             </div>
+
+            {/* ── Artefact pédagogique ── */}
             <p className="text-xs text-slate-500 leading-snug border-t border-slate-100 pt-2">
                 {seance.artefact}
             </p>
-            <div className="flex items-center justify-between pt-1">
-                <span className="text-xs text-slate-400">Observables M4 :</span>
+
+            {/* ── Pied : modules cliquables + badge complétion ── */}
+            <div className="flex items-center justify-between gap-2 pt-1">
+                {/* Badges modules — navigation directe */}
+                <div className="flex gap-1.5 flex-wrap">
+                    {info?.vues.map((vue) => {
+                        const cfg = VUE_MODULE_CONFIG[vue];
+                        if (!cfg) return null;
+                        return (
+                            <button
+                                key={vue}
+                                type="button"
+                                onClick={() => onNaviguer(vue)}
+                                title={`Ouvrir ${cfg.label}`}
+                                aria-label={`Naviguer vers le module ${cfg.label}`}
+                                className={[
+                                    "text-xs font-bold px-2.5 py-1 rounded-lg border",
+                                    "transition-colors cursor-pointer",
+                                    cfg.classes,
+                                ].join(" ")}
+                            >
+                                {cfg.label}
+                            </button>
+                        );
+                    })}
+                </div>
+                {/* Badge complétion observables RF-M0-03 */}
                 <BadgeCompletion etat={completion} />
             </div>
         </div>
     );
 }
+
 CarteSeance.propTypes = {
     seance: PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -177,6 +294,7 @@ CarteSeance.propTypes = {
     }).isRequired,
     completion: PropTypes.oneOf(["non_commence", "en_cours", "complet"])
         .isRequired,
+    onNaviguer: PropTypes.func.isRequired,
 };
 
 function BoutonModule({ module, label, description, classes, onClick }) {
@@ -308,18 +426,41 @@ export default function TableauDeBord({ onNaviguer }) {
 
             {/* ── Grille des 6 séances RF-M0-01 + RF-M0-03 ── */}
             <div>
-                <h2
-                    className="text-xs font-semibold text-slate-400 uppercase
-                    tracking-wider mb-3"
-                >
-                    Séances
-                </h2>
+                <div className="flex items-center justify-between mb-3">
+                    <h2
+                        className="text-xs font-semibold text-slate-400 uppercase
+                        tracking-wider"
+                    >
+                        Séances
+                    </h2>
+                    {/* Légende inline */}
+                    <div className="flex items-center gap-3 text-xs text-slate-400">
+                        <span className="flex items-center gap-1">
+                            <span
+                                className="w-2 h-2 rounded-full bg-slate-300
+                                inline-block"
+                            />
+                            Enseignant
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <span
+                                className="w-2 h-2 rounded-full bg-teal-300
+                                inline-block"
+                            />
+                            Élèves
+                        </span>
+                        <span className="hidden sm:flex items-center gap-1">
+                            Badges = modules actifs
+                        </span>
+                    </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {SEANCES.map((seance) => (
                         <CarteSeance
                             key={seance.id}
                             seance={seance}
                             completion={getCompletionSeance(seance.id)}
+                            onNaviguer={onNaviguer}
                         />
                     ))}
                 </div>
