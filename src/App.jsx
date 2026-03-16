@@ -1,21 +1,22 @@
 /**
  * @fileoverview Composant racine — navigation par useState.
  *
- * Sprint 13b : BilanS6 → ModuleM4 (une ligne).
+ * Sprint 14 : M0 TableauDeBord remplace le placeholder (RF-M0-01 à RF-M0-04).
+ *             onNaviguer={setVueActive} passé en prop à TableauDeBord.
+ * Sprint 13b : BilanS6 → ModuleM4.
  * Sprint 12 : intégration de la Navbar écosystème micetf.fr.
  * Sprint 11 : M4 BilanS6 remplace le placeholder EvaluationFormative.
  * Sprint 2–10 : M2 JeuCartes (sessions A/B/C paires + triplets).
  * Sprint 1, 9 : M3 BandeRepertoire interactive.
  * Sprint 5–8 : M1 ModelageInteractif (S1, S3, S4, S5).
- * M0 : placeholder (sprint 13).
  */
 
 import { useState } from "react";
 import PropTypes from "prop-types";
-import { VUES, NAV_CONFIG, VUE_INITIALE } from "./config/navigation.config";
+import { VUES, VUE_INITIALE } from "./config/navigation.config";
 import { BandeRepertoire } from "./components/BandeRepertoire";
 import { JeuCartes } from "./components/JeuCartes";
-import { TableauDeBord } from "./components/placeholders";
+import TableauDeBord from "./components/TableauDeBord/TableauDeBord";
 import { ModelageInteractif } from "./components/ModelageInteractif";
 import { ModuleM4 } from "./components/EvaluationFormative";
 import Navbar from "./components/Navbar/Navbar";
@@ -68,28 +69,26 @@ function VueBandeRepertoire({ seanceDebloquee, onChangerSeance }) {
                     </button>
                 </div>
 
-                {/* Sélecteur de séance (mode enseignant uniquement) */}
+                {/* Sélecteur de séance — mode enseignant uniquement */}
                 {!modeEleve && (
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-slate-600 font-medium">
                             Séance :
                         </span>
-                        <div className="flex gap-1">
-                            {[1, 2, 3, 4, 5, 6].map((s) => (
-                                <button
-                                    key={s}
-                                    onClick={() => onChangerSeance(s)}
-                                    className={[
-                                        "w-8 h-8 rounded text-sm font-semibold transition-colors",
-                                        seanceDebloquee === s
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-white text-slate-500 hover:bg-slate-200",
-                                    ].join(" ")}
-                                >
-                                    S{s}
-                                </button>
+                        <select
+                            value={seanceDebloquee}
+                            onChange={(e) =>
+                                onChangerSeance(Number(e.target.value))
+                            }
+                            className="px-2 py-1 text-sm border border-slate-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        >
+                            {[1, 2, 3, 4, 5, 6].map((n) => (
+                                <option key={n} value={n}>
+                                    S{n}
+                                </option>
                             ))}
-                        </div>
+                        </select>
                     </div>
                 )}
             </div>
@@ -106,20 +105,6 @@ VueBandeRepertoire.propTypes = {
     seanceDebloquee: PropTypes.number.isRequired,
     onChangerSeance: PropTypes.func.isRequired,
 };
-
-// ── Vue M2 ────────────────────────────────────────────────────────────────────
-
-/**
- * Vue M2 — Jeu de cartes interactif.
- * @returns {JSX.Element}
- */
-function VueJeuCartes() {
-    return (
-        <div className="max-w-3xl mx-auto p-6">
-            <JeuCartes />
-        </div>
-    );
-}
 
 // ── Composant racine ──────────────────────────────────────────────────────────
 
@@ -164,24 +149,32 @@ export default function App() {
                     </div>
                 );
             default:
-                return <TableauDeBord />;
+                return <TableauDeBord onNaviguer={setVueActive} />;
         }
     }
 
     return (
         <div className="min-h-screen flex flex-col bg-slate-50">
             {/* Navbar fixe — identité visuelle micetf.fr */}
-            <Navbar
-                vueActive={vueActive}
-                onNaviguer={setVueActive}
-                // onAide={() => { /* TODO: ouvrir modale d'aide */ }}
-            />
+            <Navbar vueActive={vueActive} onNaviguer={setVueActive} />
 
             {/*
              * pt-14 : compense la hauteur fixe de la navbar (h-14 = 3.5 rem)
              * afin que le contenu ne se retrouve pas masqué derrière elle.
              */}
             <main className="flex-1 pt-14">{renderVue()}</main>
+        </div>
+    );
+}
+
+/**
+ * Vue M2 — Jeu de cartes.
+ * @returns {JSX.Element}
+ */
+function VueJeuCartes() {
+    return (
+        <div className="max-w-3xl mx-auto p-6">
+            <JeuCartes />
         </div>
     );
 }
