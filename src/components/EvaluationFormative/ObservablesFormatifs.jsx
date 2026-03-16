@@ -13,16 +13,22 @@
  *   - RF-M4-01 à RF-M4-05 (SRS, section 4.5.1)
  *   - observables.config.js : SEANCES, getObservablesParSeance
  *
+ * Correction sprint 13b (ESLint react-hooks/set-state-in-effect) :
+ *   Les deux useEffect qui appelaient setEleveSelectionne de façon synchrone
+ *   ont été supprimés. L'élève effectivement affiché est désormais dérivé
+ *   directement au rendu (eleveEffectifId), sans effet secondaire.
+ *   Source : https://react.dev/learn/you-might-not-need-an-effect
+ *
  * @module components/EvaluationFormative/ObservablesFormatifs
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import PropTypes from "prop-types";
 import {
     SEANCES,
     getObservablesParSeance,
 } from "../../config/observables.config";
-import { useObservablesFormatifs, VALEURS } from "./useObservablesFormatifs";
+import { useObservablesFormatifs } from "./useObservablesFormatifs";
 import GestionClasse from "./GestionClasse";
 import FicheObservableEleve from "./FicheObservableEleve";
 import SyntheseObservables from "./SyntheseObservables";
@@ -73,9 +79,10 @@ BadgeCompletion.propTypes = {
 export default function ObservablesFormatifs() {
     const [seanceActive, setSeanceActive] = useState("S1");
     const [onglet, setOnglet] = useState(ONGLETS.SAISIE);
+
+    // eleveSelectionne : intention de l'utilisateur (peut pointer un élève supprimé)
     const [eleveSelectionne, setEleveSelectionne] = useState(null);
 
-    // Liste partagée (pour GestionClasse uniquement — la saisie utilise useObservablesFormatifs)
     const { ajouterEleve, supprimerEleve } = useClasse();
 
     const { eleves, getSaisie, setSaisie, getSynthese, getCompletionSeance } =
@@ -84,24 +91,24 @@ export default function ObservablesFormatifs() {
     const observables = getObservablesParSeance(seanceActive);
     const syntheses = getSynthese(seanceActive);
 
-    // Sélection automatique du premier élève à l'arrivée ou au changement de séance
-    useEffect(() => {
-        if (eleveSelectionne === null && eleves.length > 0) {
-            setEleveSelectionne(eleves[0].id);
-        }
-    }, [eleves, eleveSelectionne]);
+    /**
+     * Élève effectivement affiché — dérivé au rendu, sans useEffect.
+     *
+     * Règle de dérivation :
+     *   1. Liste vide → null.
+     *   2. eleveSelectionne pointe un élève existant → on le conserve.
+     *   3. Sinon (null initial ou élève supprimé) → premier de la liste.
+     *
+     * Pas de setState synchrone dans un effet : la valeur est calculée
+     * directement, React ne provoque aucun rendu supplémentaire.
+     */
+    const eleveEffectifId =
+        eleves.length === 0
+            ? null
+            : (eleves.find((e) => e.id === eleveSelectionne)?.id ??
+              eleves[0].id);
 
-    // Désélection si l'élève sélectionné n'existe plus (suppression)
-    useEffect(() => {
-        if (
-            eleveSelectionne !== null &&
-            !eleves.find((e) => e.id === eleveSelectionne)
-        ) {
-            setEleveSelectionne(eleves.length > 0 ? eleves[0].id : null);
-        }
-    }, [eleves, eleveSelectionne]);
-
-    const idxCourant = eleves.findIndex((e) => e.id === eleveSelectionne);
+    const idxCourant = eleves.findIndex((e) => e.id === eleveEffectifId);
     const eleveCourant = idxCourant >= 0 ? eleves[idxCourant] : null;
 
     function allerPrecedent() {
@@ -141,9 +148,9 @@ export default function ObservablesFormatifs() {
                                 onClick={() => {
                                     setSeanceActive(s.id);
                                     setOnglet(ONGLETS.SAISIE);
-                                    setEleveSelectionne(
-                                        eleves.length > 0 ? eleves[0].id : null
-                                    );
+                                    // Réinitialise l'intention de sélection :
+                                    // eleveEffectifId basculera sur eleves[0]
+                                    setEleveSelectionne(null);
                                 }}
                                 className={[
                                     "flex flex-col items-start px-3 py-2 rounded-xl border-2",
@@ -203,14 +210,11 @@ export default function ObservablesFormatifs() {
                     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm self-start">
                         <GestionClasse
                             eleves={eleves}
-                            eleveSelectionne={eleveSelectionne}
+                            eleveSelectionne={eleveEffectifId}
                             onAjouter={ajouterEleve}
-                            onSupprimer={(id) => {
-                                supprimerEleve(id);
-                            }}
+                            onSupprimer={supprimerEleve}
                             onSelectionner={setEleveSelectionne}
-                            // onReinitialiser non exposé ici : la réinitialisation
-                            // de la liste est une action globale (sprint 14 / M0).
+                            // onReinitialiser non exposé ici (action globale, sprint 14)
                             onReinitialiser={undefined}
                         />
                     </div>

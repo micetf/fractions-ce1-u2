@@ -16,12 +16,15 @@
  * Migration sprint 13a :
  *   - useBilanS6 délègue désormais la liste d'élèves à useClasse (persistance).
  *   - reinitialiser() → reinitialiserResultats() : ne touche plus la liste.
- *   - Ajout d'un useEffect pour la sélection automatique du premier élève :
- *     nécessaire car ajouterEleve() ne connaît plus l'id généré au moment
- *     de l'appel (id généré dans useClasse, inconnu du hook consommateur).
+ *
+ * Correction sprint 13b (ESLint react-hooks/set-state-in-effect) :
+ *   Le useEffect qui appelait setEleveSelectionne de façon synchrone a été
+ *   supprimé. L'élève effectivement affiché est dérivé au rendu (eleveEffectifId),
+ *   sans effet secondaire.
+ *   Source : https://react.dev/learn/you-might-not-need-an-effect
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useBilanS6 } from "./useBilanS6";
 import GestionClasse from "./GestionClasse";
 import SaisieAutoEval from "./SaisieAutoEval";
@@ -41,13 +44,14 @@ const ONGLETS = { SAISIE: "saisie", SYNTHESE: "synthese" };
 export default function BilanS6() {
     const [onglet, setOnglet] = useState(ONGLETS.SAISIE);
 
+    // eleveSelectionne : intention de l'utilisateur (peut pointer un élève supprimé)
+    const [eleveSelectionne, setEleveSelectionne] = useState(null);
+
     const {
         eleves,
         resultats,
-        eleveSelectionne,
         ajouterEleve,
         supprimerEleve,
-        selectionnerEleve,
         setResultat,
         syntheses,
         alerteCollective,
@@ -56,32 +60,41 @@ export default function BilanS6() {
     } = useBilanS6();
 
     /**
-     * Sélection automatique du premier élève.
+     * Élève effectivement affiché — dérivé au rendu, sans useEffect.
      *
-     * Depuis la migration sprint 13a, ajouterEleve() ne peut plus sélectionner
-     * automatiquement l'élève ajouté (l'id est généré dans useClasse, hors
-     * portée du callback). Ce useEffect compense ce comportement :
-     * dès qu'un premier élève apparaît et qu'aucune sélection n'est active,
-     * on sélectionne le dernier ajouté (fin du tableau).
+     * Règle de dérivation :
+     *   1. Liste vide → null.
+     *   2. eleveSelectionne pointe un élève existant → on le conserve.
+     *   3. Sinon (null initial ou élève supprimé) → dernier ajouté (fin du tableau),
+     *      pour reproduire le comportement attendu après un ajout.
      */
-    useEffect(() => {
-        if (eleveSelectionne === null && eleves.length > 0) {
-            selectionnerEleve(eleves[eleves.length - 1].id);
-        }
-    }, [eleves, eleveSelectionne, selectionnerEleve]);
+    const eleveEffectifId =
+        eleves.length === 0
+            ? null
+            : (eleves.find((e) => e.id === eleveSelectionne)?.id ??
+              eleves[eleves.length - 1].id);
+
+    const idxCourant = eleves.findIndex((e) => e.id === eleveEffectifId);
+    const eleveCourant = idxCourant >= 0 ? eleves[idxCourant] : null;
+    const aSuivant = idxCourant >= 0 && idxCourant < eleves.length - 1;
 
     /** Passe à l'élève suivant dans la liste (navigation séquentielle). */
     function allerEleveSuivant() {
-        if (!eleveSelectionne || eleves.length === 0) return;
-        const idx = eleves.findIndex((e) => e.id === eleveSelectionne);
-        if (idx < eleves.length - 1) {
-            selectionnerEleve(eleves[idx + 1].id);
-        }
+        if (aSuivant) setEleveSelectionne(eleves[idxCourant + 1].id);
     }
 
-    const idxCourant = eleves.findIndex((e) => e.id === eleveSelectionne);
-    const eleveCourant = idxCourant >= 0 ? eleves[idxCourant] : null;
-    const aSuivant = idxCourant >= 0 && idxCourant < eleves.length - 1;
+    /**
+     * Supprime un élève.
+     * Délègue à useBilanS6 qui nettoie ses résultats et retire de la liste
+     * partagée. La sélection est réinitialisée : eleveEffectifId basculera
+     * automatiquement sur le dernier élève restant au prochain rendu.
+     */
+    function handleSupprimer(id) {
+        supprimerEleve(id);
+        // Si l'élève supprimé était sélectionné, on efface l'intention :
+        // eleveEffectifId choisira automatiquement un autre élève.
+        if (eleveSelectionne === id) setEleveSelectionne(null);
+    }
 
     return (
         <div className="min-h-[70vh] space-y-4">
@@ -143,10 +156,10 @@ export default function BilanS6() {
                     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm self-start">
                         <GestionClasse
                             eleves={eleves}
-                            eleveSelectionne={eleveSelectionne}
+                            eleveSelectionne={eleveEffectifId}
                             onAjouter={ajouterEleve}
-                            onSupprimer={supprimerEleve}
-                            onSelectionner={selectionnerEleve}
+                            onSupprimer={handleSupprimer}
+                            onSelectionner={setEleveSelectionne}
                             onReinitialiser={reinitialiserResultats}
                         />
                     </div>
@@ -182,7 +195,7 @@ export default function BilanS6() {
                         syntheses={syntheses}
                         resultats={resultats}
                         onSelectionnerEleve={(id) => {
-                            selectionnerEleve(id);
+                            setEleveSelectionne(id);
                             setOnglet(ONGLETS.SAISIE);
                         }}
                     />
@@ -191,8 +204,8 @@ export default function BilanS6() {
 
             {/* ── Note de bas de page ── */}
             <p className="text-xs text-slate-400 text-center pb-2">
-                Sprint 13a — Bilan S6 migré vers persistance localStorage
-                (RF-M4-01 à RF-M4-09).
+                Sprint 13a/b — Bilan S6 avec persistance localStorage (RF-M4-01
+                à RF-M4-09).
             </p>
         </div>
     );
