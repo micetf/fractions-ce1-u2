@@ -1,12 +1,10 @@
 /**
  * @fileoverview TableauDeBord — module M0, vue d'ensemble de la séquence.
  *
- * Enrichissement UX : chaque carte séance affiche désormais
- *   - le type d'utilisateur (enseignant / élèves / les deux)
- *   - les modules actifs pour cette séance, cliquables pour navigation directe
- *
  * Sources : RF-M0-01 à RF-M0-04 (SRS, section 4.1)
- *           Tableau de correspondance séances × modules (SRS, section 3)
+ *           SRS section 2.1 — trois usages numériques tracés aux fiches
+ *           Tricot (cité fiches S3/S4) — réduction charge extrinsèque :
+ *             référence et usages regroupés dans une seule carte.
  */
 
 import PropTypes from "prop-types";
@@ -23,15 +21,41 @@ function resoudreFractions(fractionsIds) {
         .join(", ");
 }
 
-// ── Données pédagogiques par séance ──────────────────────────────────────────
-// Source : SRS section 3 — tableau Architecture fonctionnelle.
+// ── Données pédagogiques ──────────────────────────────────────────────────────
 
 /**
- * Pour chaque séance : utilisateur principal et modules numériques actifs.
- * L'ordre des vues détermine l'ordre des badges dans la carte.
+ * Trois usages numériques de l'application, tracés au SRS section 2.1
+ * et aux fiches de préparation S1–S6.
  *
- * @type {Record<string, { utilisateur: string, vues: string[] }>}
+ * Chaque usage correspond à un matériau cité dans les fiches que
+ * l'application prend en charge numériquement.
  */
+const USAGES_NUMERIQUES = [
+    {
+        vue: VUES.MODELAGE,
+        module: "M1",
+        libelle: "Le visualiseur numérique",
+        seances: "S1, S3, S4, S5",
+        classes: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
+    },
+    {
+        vue: VUES.JEU_DE_CARTES,
+        module: "M2",
+        libelle: "Le jeu de cartes interactif",
+        seances: "S2, S6",
+        classes:
+            "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+    },
+    {
+        vue: VUES.EVALUATION,
+        module: "M4",
+        libelle: "Les grilles d'observables",
+        seances: "Toutes séances",
+        classes:
+            "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100",
+    },
+];
+
 const SEANCES_MODULES = {
     S1: { utilisateur: "Enseignant", vues: [VUES.MODELAGE, VUES.EVALUATION] },
     S2: { utilisateur: "Élèves", vues: [VUES.JEU_DE_CARTES, VUES.EVALUATION] },
@@ -50,10 +74,6 @@ const SEANCES_MODULES = {
     },
 };
 
-/**
- * Apparence des badges de module — cohérents avec les couleurs du hub M1–M4.
- * @type {Record<string, { label: string, classes: string }>}
- */
 const VUE_MODULE_CONFIG = {
     [VUES.MODELAGE]: {
         label: "M1",
@@ -76,17 +96,11 @@ const VUE_MODULE_CONFIG = {
     },
 };
 
-/**
- * Apparence du badge utilisateur selon le public de la séance.
- * @type {Record<string, string>}
- */
 const UTILISATEUR_CLASSES = {
     Enseignant: "bg-slate-100 text-slate-600",
     Élèves: "bg-teal-50 text-teal-700",
     "Élèves · Enseignant": "bg-slate-100 text-slate-600",
 };
-
-// ── Constantes visuelles séances ─────────────────────────────────────────────
 
 const COULEURS_SEANCE = {
     S1: {
@@ -174,8 +188,105 @@ const MODULES_NAV = [
 // ── Sous-composants ───────────────────────────────────────────────────────────
 
 /**
- * Badge complétion observables (RF-M0-03).
+ * Carte Eduscol enrichie — référence + trois usages numériques intégrés.
+ *
+ * Principe Tricot : référence documentaire et usages regroupés
+ * dans une seule unité cognitive — pas de split-attention.
  */
+function CarteEduscol({ onNaviguer }) {
+    return (
+        <div
+            className="bg-blue-50 border border-blue-200 rounded-2xl shadow-sm
+            overflow-hidden"
+        >
+            {/* ── En-tête cliquable — lien vers le PDF ── */}
+            <a
+                href="https://eduscol.education.gouv.fr/sites/default/files/document/2025livretaccompagnementmathce1pdf-116325.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 px-5 py-4 hover:bg-blue-100
+                    transition-colors group"
+            >
+                <span className="text-2xl shrink-0" aria-hidden="true">
+                    📘
+                </span>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-blue-800">
+                        Livret d'accompagnement CE1 — Mathématiques
+                    </p>
+                    <p className="text-xs text-blue-600 mt-0.5">
+                        Éduscol / MEN · 2025 · Séquence n°1 — Enseigner les
+                        fractions
+                    </p>
+                </div>
+                <span
+                    className="text-blue-400 text-sm shrink-0 group-hover:translate-x-1
+                        transition-transform"
+                    aria-hidden="true"
+                >
+                    →
+                </span>
+            </a>
+
+            {/* ── Séparateur + accroche ── */}
+            <div className="border-t border-blue-200 px-5 py-3 bg-white">
+                <p className="text-xs text-slate-500">
+                    Cet outil numérise trois matériaux mentionnés dans les
+                    fiches de la séquence :
+                </p>
+            </div>
+
+            {/* ── Trois usages — cliquables ── */}
+            <div className="divide-y divide-blue-100">
+                {USAGES_NUMERIQUES.map((usage) => (
+                    <button
+                        key={usage.vue}
+                        type="button"
+                        onClick={() => onNaviguer(usage.vue)}
+                        className="w-full flex items-center gap-3 px-5 py-3 bg-white
+                            hover:bg-slate-50 transition-colors text-left"
+                    >
+                        {/* Badge module */}
+                        <span
+                            className={[
+                                "shrink-0 text-xs font-bold px-2 py-1 rounded-lg border",
+                                "min-w-10 text-center transition-colors",
+                                usage.classes,
+                            ].join(" ")}
+                        >
+                            {usage.module}
+                        </span>
+
+                        {/* Libellé */}
+                        <span className="flex-1 text-sm text-slate-700 font-medium">
+                            {usage.libelle}
+                        </span>
+
+                        {/* Séances */}
+                        <span className="text-xs text-slate-400 shrink-0">
+                            {usage.seances}
+                        </span>
+
+                        {/* Flèche */}
+                        <span
+                            className="text-slate-300 text-xs shrink-0"
+                            aria-hidden="true"
+                        >
+                            →
+                        </span>
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+CarteEduscol.propTypes = {
+    onNaviguer: PropTypes.func.isRequired,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function BadgeCompletion({ etat }) {
     const ui = COMPLETION_UI[etat] ?? COMPLETION_UI.non_commence;
     return (
@@ -192,10 +303,6 @@ BadgeCompletion.propTypes = {
     etat: PropTypes.oneOf(["non_commence", "en_cours", "complet"]).isRequired,
 };
 
-/**
- * Carte d'une séance (RF-M0-01 + RF-M0-03).
- * Les badges de module permettent la navigation directe (RF-M0-02).
- */
 function CarteSeance({ seance, completion, onNaviguer }) {
     const couleurs = COULEURS_SEANCE[seance.id] ?? COULEURS_SEANCE.S1;
     const fractions = resoudreFractions(seance.fractionsIds);
@@ -207,7 +314,6 @@ function CarteSeance({ seance, completion, onNaviguer }) {
             className={`bg-white border-2 ${couleurs.bordure} rounded-2xl p-4
             space-y-3 shadow-sm flex flex-col`}
         >
-            {/* ── En-tête : séance, format, utilisateur, durée ── */}
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-2xl font-black ${couleurs.titre}`}>
@@ -233,12 +339,10 @@ function CarteSeance({ seance, completion, onNaviguer }) {
                 </span>
             </div>
 
-            {/* ── Titre ── */}
             <p className="text-sm font-semibold text-slate-700 leading-snug flex-1">
                 {seance.titre}
             </p>
 
-            {/* ── Fractions ciblées ── */}
             <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs text-slate-400">Fractions :</span>
                 <span className="text-xs font-mono font-semibold text-slate-600">
@@ -246,14 +350,14 @@ function CarteSeance({ seance, completion, onNaviguer }) {
                 </span>
             </div>
 
-            {/* ── Artefact pédagogique ── */}
-            <p className="text-xs text-slate-500 leading-snug border-t border-slate-100 pt-2">
+            <p
+                className="text-xs text-slate-500 leading-snug border-t
+                border-slate-100 pt-2"
+            >
                 {seance.artefact}
             </p>
 
-            {/* ── Pied : modules cliquables + badge complétion ── */}
             <div className="flex items-center justify-between gap-2 pt-1">
-                {/* Badges modules — navigation directe */}
                 <div className="flex gap-1.5 flex-wrap">
                     {info?.vues.map((vue) => {
                         const cfg = VUE_MODULE_CONFIG[vue];
@@ -263,11 +367,10 @@ function CarteSeance({ seance, completion, onNaviguer }) {
                                 key={vue}
                                 type="button"
                                 onClick={() => onNaviguer(vue)}
-                                title={`Ouvrir ${cfg.label}`}
                                 aria-label={`Naviguer vers le module ${cfg.label}`}
                                 className={[
                                     "text-xs font-bold px-2.5 py-1 rounded-lg border",
-                                    "transition-colors cursor-pointer",
+                                    "transition-colors",
                                     cfg.classes,
                                 ].join(" ")}
                             >
@@ -276,7 +379,6 @@ function CarteSeance({ seance, completion, onNaviguer }) {
                         );
                     })}
                 </div>
-                {/* Badge complétion observables RF-M0-03 */}
                 <BadgeCompletion etat={completion} />
             </div>
         </div>
@@ -317,6 +419,7 @@ function BoutonModule({ module, label, description, classes, onClick }) {
         </button>
     );
 }
+
 BoutonModule.propTypes = {
     module: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
@@ -337,7 +440,10 @@ export default function TableauDeBord({ onNaviguer }) {
     return (
         <div className="max-w-5xl mx-auto p-6 space-y-6">
             {/* ── En-tête ── */}
-            <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-sm">
+            <div
+                className="bg-white border border-slate-200 rounded-2xl px-6
+                py-4 shadow-sm"
+            >
                 <h1 className="text-xl font-black text-slate-800">
                     Fractions CE1 — Tableau de bord
                 </h1>
@@ -346,35 +452,8 @@ export default function TableauDeBord({ onNaviguer }) {
                 </p>
             </div>
 
-            {/* ── Référence pédagogique ── */}
-            <a
-                href="https://eduscol.education.gouv.fr/sites/default/files/document/2025livretaccompagnementmathce1pdf-116325.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-4 px-5 py-4 bg-blue-50 border
-                    border-blue-200 hover:border-blue-400 hover:bg-blue-100
-                    rounded-2xl transition-colors shadow-sm group"
-            >
-                <span className="text-2xl shrink-0" aria-hidden="true">
-                    📘
-                </span>
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-blue-800">
-                        Livret d'accompagnement CE1 — Mathématiques
-                    </p>
-                    <p className="text-xs text-blue-600 mt-0.5">
-                        Éduscol / Ministère de l'Éducation nationale · 2025 ·
-                        Séquence n°1 — Enseigner les fractions
-                    </p>
-                </div>
-                <span
-                    className="text-blue-400 text-sm group-hover:translate-x-1
-                    transition-transform shrink-0"
-                    aria-hidden="true"
-                >
-                    →
-                </span>
-            </a>
+            {/* ── Carte Eduscol + usages numériques (unité cognitive unique) ── */}
+            <CarteEduscol onNaviguer={onNaviguer} />
 
             {/* ── Accès rapide bande-répertoire RF-M0-04 ── */}
             <button
@@ -433,7 +512,6 @@ export default function TableauDeBord({ onNaviguer }) {
                     >
                         Séances
                     </h2>
-                    {/* Légende inline */}
                     <div className="flex items-center gap-3 text-xs text-slate-400">
                         <span className="flex items-center gap-1">
                             <span
