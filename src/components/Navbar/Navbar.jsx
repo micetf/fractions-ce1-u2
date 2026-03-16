@@ -1,84 +1,56 @@
 /**
- * @fileoverview Navbar — barre de navigation principale.
+ * @fileoverview Navbar principale — identité visuelle micetf.fr.
  *
- * Reproduit fidèlement l'UX/UI de l'écosystème micetf.fr :
- *   - Positionnement fixe, fond gray-800, ombre portée (shadow-lg)
- *   - Logo « MiCetF » cliquable (lien externe vers micetf.fr)
- *   - Chevron + titre « Fractions CE1 » en police Fredoka
- *   - Boutons de navigation inter-modules (M0–M4) intégrés
- *   - Menu hamburger responsive (masqué ≥ md, visible < md)
- *   - Utilitaires : Aide, Don PayPal, Contact webmaster
- *
- * Dépendances extérieures :
- *   - Police Fredoka chargée via Google Fonts dans index.html
- *
- * @module Navbar
+ * Modification : BoutonAide activé (était commenté).
+ * onAide est désormais utilisé — passé depuis App.jsx pour ouvrir
+ * la modale PriseEnMain.
  */
 
 import { useState } from "react";
 import PropTypes from "prop-types";
-import { NAV_CONFIG } from "../../config/navigation.config";
+import { VUES, NAV_CONFIG } from "../../config/navigation.config";
 
-// ── Icônes SVG inline ─────────────────────────────────────────────────────────
+// ── Icônes ────────────────────────────────────────────────────────────────────
 
-/**
- * Icône chevron droit (identique à celle de micetf.fr).
- * @returns {JSX.Element}
- */
-function IconChevron() {
-    return (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            className="h-4 w-4 shrink-0"
-            fill="#f8f9fa"
-            aria-hidden="true"
-        >
-            <path d="M12.95 10.707l.707-.707L8 4.343 6.586 5.757 10.828 10l-4.242 4.243L8 15.657l4.95-4.95z" />
-        </svg>
-    );
-}
-
-/**
- * Icône cœur PayPal (identique à celle de micetf.fr).
- * @returns {JSX.Element}
- */
 function IconHeart() {
     return (
         <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            className="h-4 w-4 inline"
-            fill="#f8f9fa"
+            viewBox="0 0 24 24"
+            className="w-5 h-5"
+            fill="currentColor"
             aria-hidden="true"
         >
-            <path d="M10 3.22l-.61-.6a5.5 5.5 0 00-7.78 7.77L10 18.78l8.39-8.4a5.5 5.5 0 00-7.78-7.77l-.61.61z" />
+            <path
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.27 2 8.5
+                2 5.41 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08
+                C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.41 22 8.5
+                c0 3.77-3.4 6.86-8.55 11.53L12 21.35z"
+            />
         </svg>
     );
 }
 
-/**
- * Icône enveloppe mail (identique à celle de micetf.fr).
- * @returns {JSX.Element}
- */
 function IconMail() {
     return (
         <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            className="h-4 w-4 inline"
-            fill="#f8f9fa"
+            viewBox="0 0 24 24"
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
             aria-hidden="true"
         >
-            <path d="M18 2a2 2 0 012 2v12a2 2 0 01-2 2H2a2 2 0 01-2-2V4c0-1.1.9-2 2-2h16zm-4.37 9.1L20 16v-2l-5.12-3.9L20 6V4l-10 8L0 4v2l5.12 4.1L0 14v2l6.37-4.9L10 14l3.63-2.9z" />
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8
+                M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5
+                a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
         </svg>
     );
 }
 
-/**
- * Icône hamburger (trois lignes horizontales).
- * @returns {JSX.Element}
- */
 function IconHamburger() {
     return (
         <svg
@@ -101,10 +73,9 @@ function IconHamburger() {
 // ── Sous-composants ───────────────────────────────────────────────────────────
 
 /**
- * Bouton d'aide (« ? »).
+ * Bouton d'aide « ? » — ouvre la modale PriseEnMain.
  *
  * @param {{ onClick: () => void }} props
- * @returns {JSX.Element}
  */
 function BoutonAide({ onClick }) {
     return (
@@ -112,28 +83,17 @@ function BoutonAide({ onClick }) {
             type="button"
             onClick={onClick}
             className="w-10 h-10 bg-blue-600 text-white rounded-full
-                       hover:bg-blue-700 transition font-bold text-lg"
-            title="Aide"
-            aria-label="Ouvrir l'aide"
+                hover:bg-blue-700 transition font-bold text-lg"
+            title="Prise en main"
+            aria-label="Ouvrir la prise en main"
         >
             ?
         </button>
     );
 }
 
-BoutonAide.propTypes = {
-    onClick: PropTypes.func,
-};
+BoutonAide.propTypes = { onClick: PropTypes.func.isRequired };
 
-BoutonAide.defaultProps = {
-    onClick: undefined,
-};
-
-/**
- * Bouton de don PayPal (identique à celui de micetf.fr).
- *
- * @returns {JSX.Element}
- */
 function BoutonDon() {
     return (
         <form
@@ -145,7 +105,7 @@ function BoutonDon() {
             <button
                 type="submit"
                 className="px-3 py-2 bg-yellow-500 text-white rounded
-                           hover:bg-yellow-600 transition my-1 mx-1"
+                    hover:bg-yellow-600 transition my-1 mx-1"
                 title="Si vous pensez que ces outils le méritent… Merci !"
                 aria-label="Faire un don via PayPal"
             >
@@ -161,17 +121,12 @@ function BoutonDon() {
     );
 }
 
-/**
- * Lien de contact webmaster (identique à celui de micetf.fr).
- *
- * @returns {JSX.Element}
- */
 function LienContact() {
     return (
         <a
             href="mailto:webmaster@micetf.fr?subject=À propos de /fractions-ce1-u2"
             className="px-3 py-2 bg-gray-600 text-white rounded
-                       hover:bg-gray-700 transition my-1 mx-1 inline-block"
+                hover:bg-gray-700 transition my-1 mx-1 inline-block"
             title="Pour contacter le webmaster…"
             aria-label="Envoyer un e-mail au webmaster"
         >
@@ -185,32 +140,14 @@ function LienContact() {
 /**
  * Navbar principale de l'application Fractions CE1.
  *
- * Reproduit l'identité visuelle de l'écosystème micetf.fr tout en
- * intégrant la navigation interne entre modules (M0–M4).
- *
- * Comportement responsive :
- *   - ≥ md : tous les éléments affichés en ligne
- *   - < md  : menu hamburger qui déploie les boutons de navigation
- *             dans un panneau absolu sous la barre
- *
  * @param {Object}   props
- * @param {string}   props.vueActive    - Identifiant de la vue courante
- * @param {Function} props.onNaviguer   - Callback de changement de vue
- * @param {Function} [props.onAide]     - Callback du bouton « ? »
- * @returns {JSX.Element}
+ * @param {string}   props.vueActive  - Identifiant de la vue courante
+ * @param {Function} props.onNaviguer - Callback de changement de vue
+ * @param {Function} props.onAide     - Ouvre la modale de prise en main
  */
 export default function Navbar({ vueActive, onNaviguer, onAide }) {
     const [menuOuvert, setMenuOuvert] = useState(false);
 
-    /** Bascule l'état du menu mobile. */
-    function toggleMenu() {
-        setMenuOuvert((prev) => !prev);
-    }
-
-    /**
-     * Navigue vers une vue et ferme le menu mobile.
-     * @param {string} vue
-     */
     function naviguer(vue) {
         onNaviguer(vue);
         setMenuOuvert(false);
@@ -223,21 +160,31 @@ export default function Navbar({ vueActive, onNaviguer, onAide }) {
         >
             <div className="max-w-full px-4">
                 <div className="flex items-center justify-between h-14">
-                    {/* ── Logo MiCetF ── */}
+                    {/* Logo */}
                     <a
                         href="https://micetf.fr"
-                        className="text-white font-semibold text-lg hover:text-gray-300 transition shrink-0"
+                        className="text-white font-semibold text-lg
+                            hover:text-gray-300 transition shrink-0"
                         aria-label="Retour à l'accueil MiCetF"
                     >
                         MiCetF
                     </a>
 
-                    {/* ── Bouton hamburger (mobile uniquement) ── */}
+                    {/* Titre (masqué sur mobile) */}
+                    <span
+                        className="hidden md:block text-white font-semibold
+                        text-base ml-4 truncate"
+                    >
+                        Fractions CE1
+                    </span>
+
+                    {/* Hamburger mobile */}
                     <button
                         type="button"
-                        onClick={toggleMenu}
-                        className="md:hidden inline-flex items-center justify-center p-2
-                                   text-gray-400 hover:text-white hover:bg-gray-700 rounded transition"
+                        onClick={() => setMenuOuvert((p) => !p)}
+                        className="md:hidden inline-flex items-center justify-center
+                            p-2 text-gray-400 hover:text-white hover:bg-gray-700
+                            rounded transition"
                         aria-controls="navbarMenu"
                         aria-expanded={menuOuvert}
                         aria-label={
@@ -247,38 +194,12 @@ export default function Navbar({ vueActive, onNaviguer, onAide }) {
                         <IconHamburger />
                     </button>
 
-                    {/* ── Menu principal ── */}
+                    {/* Navigation desktop */}
                     <div
-                        id="navbarMenu"
-                        className={[
-                            // Base layout
-                            "md:flex md:items-center md:flex-1",
-                            "flex-col md:flex-row",
-                            // Positionnement : absolu sur mobile, statique sur md+
-                            "absolute md:static top-14 left-0 right-0",
-                            "bg-gray-800 md:bg-transparent",
-                            "px-4 md:px-0 pb-3 md:pb-0",
-                            // Visibilité
-                            menuOuvert ? "flex" : "hidden",
-                        ].join(" ")}
+                        className="hidden md:flex flex-1 items-center
+                        justify-between ml-6 gap-2"
                     >
-                        {/* Titre de l'application avec chevron */}
-                        <div className="flex items-center ml-0 md:ml-4 py-2 md:py-0">
-                            <div className="flex items-center gap-1.5">
-                                <IconChevron />
-                                <span
-                                    className="text-white font-semibold text-lg"
-                                    style={{
-                                        fontFamily: "Fredoka, sans-serif",
-                                    }}
-                                >
-                                    Fractions CE1
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Boutons de navigation inter-modules */}
-                        <div className="flex flex-wrap gap-1 ml-0 md:ml-4 py-2 md:py-0">
+                        <div className="flex gap-1">
                             {Object.entries(NAV_CONFIG).map(
                                 ([vue, { label, module }]) => (
                                     <button
@@ -286,7 +207,8 @@ export default function Navbar({ vueActive, onNaviguer, onAide }) {
                                         type="button"
                                         onClick={() => naviguer(vue)}
                                         className={[
-                                            "flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors",
+                                            "flex items-center gap-1.5 px-3 py-2",
+                                            "rounded text-sm font-medium transition",
                                             vueActive === vue
                                                 ? "bg-blue-600 text-white"
                                                 : "text-gray-400 hover:text-white hover:bg-gray-700",
@@ -306,17 +228,16 @@ export default function Navbar({ vueActive, onNaviguer, onAide }) {
                             )}
                         </div>
 
-                        {/* Espaceur flexible */}
                         <div className="flex-1" />
 
-                        {/* Boutons utilitaires */}
+                        {/* Utilitaires — BoutonAide activé */}
                         <ul
-                            className="flex items-center space-x-1 mt-2 md:mt-0"
+                            className="flex items-center space-x-1"
                             aria-label="Actions rapides"
                         >
-                            {/* <li>
+                            <li>
                                 <BoutonAide onClick={onAide} />
-                            </li> */}
+                            </li>
                             <li>
                                 <BoutonDon />
                             </li>
@@ -326,20 +247,56 @@ export default function Navbar({ vueActive, onNaviguer, onAide }) {
                         </ul>
                     </div>
                 </div>
+
+                {/* Menu mobile déroulant */}
+                {menuOuvert && (
+                    <div id="navbarMenu" className="md:hidden pb-3 space-y-1">
+                        {Object.entries(NAV_CONFIG).map(
+                            ([vue, { label, module }]) => (
+                                <button
+                                    key={vue}
+                                    type="button"
+                                    onClick={() => naviguer(vue)}
+                                    className={[
+                                        "w-full flex items-center gap-2 px-3 py-2",
+                                        "rounded text-sm font-medium transition text-left",
+                                        vueActive === vue
+                                            ? "bg-blue-600 text-white"
+                                            : "text-gray-400 hover:text-white hover:bg-gray-700",
+                                    ].join(" ")}
+                                    aria-current={
+                                        vueActive === vue ? "page" : undefined
+                                    }
+                                >
+                                    <span className="text-xs font-mono opacity-60">
+                                        {module}
+                                    </span>
+                                    {label}
+                                </button>
+                            )
+                        )}
+                        <div
+                            className="flex items-center gap-2 pt-2 border-t
+                            border-gray-700"
+                        >
+                            <BoutonAide
+                                onClick={() => {
+                                    setMenuOuvert(false);
+                                    onAide();
+                                }}
+                            />
+                            <BoutonDon />
+                            <LienContact />
+                        </div>
+                    </div>
+                )}
             </div>
         </nav>
     );
 }
 
 Navbar.propTypes = {
-    /** Identifiant de la vue actuellement affichée. */
     vueActive: PropTypes.string.isRequired,
-    /** Fonction appelée lors d'un changement de vue. */
     onNaviguer: PropTypes.func.isRequired,
-    /** Fonction optionnelle appelée au clic sur le bouton « Aide ». */
-    onAide: PropTypes.func,
-};
-
-Navbar.defaultProps = {
-    onAide: undefined,
+    onAide: PropTypes.func.isRequired,
 };

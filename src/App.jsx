@@ -1,7 +1,10 @@
 /**
  * @fileoverview Composant racine — navigation par useState.
  *
- * Structure : Navbar (fixe) + main (flex-1) + PiedDePage (global).
+ * Intègre la modale PriseEnMain :
+ *   - usePriseEnMain gère l'état (première visite + réouverture)
+ *   - onAide={ouvrir} passé à Navbar active le bouton « ? »
+ *   - PriseEnMain rendu au-dessus de tout (z-50)
  */
 
 import { useState } from "react";
@@ -14,24 +17,19 @@ import { ModelageInteractif } from "./components/ModelageInteractif";
 import { ModuleM4 } from "./components/EvaluationFormative";
 import Navbar from "./components/Navbar/Navbar";
 import PiedDePage from "./components/PiedDePage/PiedDePage";
+import PriseEnMain from "./components/PriseEnMain/PriseEnMain";
+import { usePriseEnMain } from "./hooks/usePriseEnMain";
 
-// ── Vues disponibles ──────────────────────────────────────────────────────────
+// ── Vues ──────────────────────────────────────────────────────────────────────
 
-/**
- * Vue M3 — Bande-répertoire avec sélecteur de séance et bascule mode.
- *
- * @param {Object} props
- * @param {number} props.seanceDebloquee
- * @param {(n: number) => void} props.onChangerSeance
- */
 function VueBandeRepertoire({ seanceDebloquee, onChangerSeance }) {
     const [modeEleve, setModeEleve] = useState(false);
 
     return (
         <div className="max-w-2xl mx-auto p-6 space-y-4">
             <div
-                className="flex items-center justify-between gap-3 p-3 bg-slate-100
-                rounded-lg flex-wrap"
+                className="flex items-center justify-between gap-3 p-3
+                bg-slate-100 rounded-lg flex-wrap"
             >
                 <div className="flex items-center gap-2">
                     <span className="text-sm text-slate-600 font-medium">
@@ -70,8 +68,9 @@ function VueBandeRepertoire({ seanceDebloquee, onChangerSeance }) {
                             onChange={(e) =>
                                 onChangerSeance(Number(e.target.value))
                             }
-                            className="px-2 py-1 text-sm border border-slate-300 rounded-lg
-                                focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="px-2 py-1 text-sm border border-slate-300
+                                rounded-lg focus:outline-none focus:ring-2
+                                focus:ring-blue-400"
                         >
                             {[1, 2, 3, 4, 5, 6].map((n) => (
                                 <option key={n} value={n}>
@@ -105,12 +104,10 @@ function VueJeuCartes() {
 
 // ── Composant racine ──────────────────────────────────────────────────────────
 
-/**
- * @returns {JSX.Element}
- */
 export default function App() {
     const [vueActive, setVueActive] = useState(VUE_INITIALE);
     const [seanceDebloquee, setSeanceDebloquee] = useState(1);
+    const { visible, ouvrir, fermer } = usePriseEnMain();
 
     function renderVue() {
         switch (vueActive) {
@@ -142,14 +139,18 @@ export default function App() {
 
     return (
         <div className="min-h-screen flex flex-col bg-slate-50">
-            {/* Navbar fixe */}
-            <Navbar vueActive={vueActive} onNaviguer={setVueActive} />
-
-            {/* pt-14 : compense la hauteur fixe de la navbar (h-14 = 3.5 rem) */}
+            <Navbar
+                vueActive={vueActive}
+                onNaviguer={setVueActive}
+                onAide={ouvrir}
+            />
             <main className="flex-1 pt-14">{renderVue()}</main>
-
-            {/* Pied de page global — référence institutionnelle */}
             <PiedDePage />
+
+            {/* Modale de prise en main — rendue au-dessus de tout */}
+            {visible && (
+                <PriseEnMain onFermer={fermer} onNaviguer={setVueActive} />
+            )}
         </div>
     );
 }
