@@ -2,8 +2,6 @@
  * @fileoverview TableauDeBord — module M0, vue d'ensemble de la séquence.
  *
  * Vue affichée au démarrage de l'application.
- * Accessible à l'enseignant pour piloter la séquence sur les 6 séances.
- *
  * Sources : RF-M0-01 à RF-M0-04 (SRS, section 4.1)
  */
 
@@ -120,7 +118,6 @@ function BadgeCompletion({ etat }) {
         </span>
     );
 }
-
 BadgeCompletion.propTypes = {
     etat: PropTypes.oneOf(["non_commence", "en_cours", "complet"]).isRequired,
 };
@@ -132,7 +129,8 @@ function CarteSeance({ seance, completion }) {
 
     return (
         <div
-            className={`bg-white border-2 ${couleurs.bordure} rounded-2xl p-4 space-y-3 shadow-sm`}
+            className={`bg-white border-2 ${couleurs.bordure} rounded-2xl p-4
+            space-y-3 shadow-sm`}
         >
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -168,7 +166,6 @@ function CarteSeance({ seance, completion }) {
         </div>
     );
 }
-
 CarteSeance.propTypes = {
     seance: PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -202,7 +199,6 @@ function BoutonModule({ module, label, description, classes, onClick }) {
         </button>
     );
 }
-
 BoutonModule.propTypes = {
     module: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
@@ -232,6 +228,36 @@ export default function TableauDeBord({ onNaviguer }) {
                 </p>
             </div>
 
+            {/* ── Référence pédagogique ── */}
+            <a
+                href="https://eduscol.education.gouv.fr/sites/default/files/document/2025livretaccompagnementmathce1pdf-116325.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 px-5 py-4 bg-blue-50 border
+                    border-blue-200 hover:border-blue-400 hover:bg-blue-100
+                    rounded-2xl transition-colors shadow-sm group"
+            >
+                <span className="text-2xl shrink-0" aria-hidden="true">
+                    📘
+                </span>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-blue-800">
+                        Livret d'accompagnement CE1 — Mathématiques
+                    </p>
+                    <p className="text-xs text-blue-600 mt-0.5">
+                        Éduscol / Ministère de l'Éducation nationale · 2025 ·
+                        Séquence n°1 — Enseigner les fractions
+                    </p>
+                </div>
+                <span
+                    className="text-blue-400 text-sm group-hover:translate-x-1
+                    transition-transform shrink-0"
+                    aria-hidden="true"
+                >
+                    →
+                </span>
+            </a>
+
             {/* ── Accès rapide bande-répertoire RF-M0-04 ── */}
             <button
                 type="button"
@@ -260,7 +286,10 @@ export default function TableauDeBord({ onNaviguer }) {
 
             {/* ── Hub modules RF-M0-02 ── */}
             <div>
-                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                <h2
+                    className="text-xs font-semibold text-slate-400 uppercase
+                    tracking-wider mb-3"
+                >
                     Modules
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -279,7 +308,10 @@ export default function TableauDeBord({ onNaviguer }) {
 
             {/* ── Grille des 6 séances RF-M0-01 + RF-M0-03 ── */}
             <div>
-                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                <h2
+                    className="text-xs font-semibold text-slate-400 uppercase
+                    tracking-wider mb-3"
+                >
                     Séances
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -1,14 +1,7 @@
 /**
  * @fileoverview Composant racine — navigation par useState.
  *
- * Sprint 14 : M0 TableauDeBord remplace le placeholder (RF-M0-01 à RF-M0-04).
- *             onNaviguer={setVueActive} passé en prop à TableauDeBord.
- * Sprint 13b : BilanS6 → ModuleM4.
- * Sprint 12 : intégration de la Navbar écosystème micetf.fr.
- * Sprint 11 : M4 BilanS6 remplace le placeholder EvaluationFormative.
- * Sprint 2–10 : M2 JeuCartes (sessions A/B/C paires + triplets).
- * Sprint 1, 9 : M3 BandeRepertoire interactive.
- * Sprint 5–8 : M1 ModelageInteractif (S1, S3, S4, S5).
+ * Structure : Navbar (fixe) + main (flex-1) + PiedDePage (global).
  */
 
 import { useState } from "react";
@@ -20,15 +13,12 @@ import TableauDeBord from "./components/TableauDeBord/TableauDeBord";
 import { ModelageInteractif } from "./components/ModelageInteractif";
 import { ModuleM4 } from "./components/EvaluationFormative";
 import Navbar from "./components/Navbar/Navbar";
+import PiedDePage from "./components/PiedDePage/PiedDePage";
 
 // ── Vues disponibles ──────────────────────────────────────────────────────────
 
 /**
  * Vue M3 — Bande-répertoire avec sélecteur de séance et bascule mode.
- *
- * Mode enseignant : sélecteur de séance visible (contrôle RF-M3-03).
- * Mode élève      : lecture seule, sans contrôles (RF-M3-04 —
- *                   accessible en session C de S6).
  *
  * @param {Object} props
  * @param {number} props.seanceDebloquee
@@ -39,8 +29,10 @@ function VueBandeRepertoire({ seanceDebloquee, onChangerSeance }) {
 
     return (
         <div className="max-w-2xl mx-auto p-6 space-y-4">
-            {/* Bascule mode enseignant / élève */}
-            <div className="flex items-center justify-between gap-3 p-3 bg-slate-100 rounded-lg flex-wrap">
+            <div
+                className="flex items-center justify-between gap-3 p-3 bg-slate-100
+                rounded-lg flex-wrap"
+            >
                 <div className="flex items-center gap-2">
                     <span className="text-sm text-slate-600 font-medium">
                         Mode :
@@ -68,8 +60,6 @@ function VueBandeRepertoire({ seanceDebloquee, onChangerSeance }) {
                         Élève
                     </button>
                 </div>
-
-                {/* Sélecteur de séance — mode enseignant uniquement */}
                 {!modeEleve && (
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-slate-600 font-medium">
@@ -92,7 +82,6 @@ function VueBandeRepertoire({ seanceDebloquee, onChangerSeance }) {
                     </div>
                 )}
             </div>
-
             <BandeRepertoire
                 seanceDebloquee={seanceDebloquee}
                 modeEleve={modeEleve}
@@ -106,25 +95,23 @@ VueBandeRepertoire.propTypes = {
     onChangerSeance: PropTypes.func.isRequired,
 };
 
+function VueJeuCartes() {
+    return (
+        <div className="max-w-3xl mx-auto p-6">
+            <JeuCartes />
+        </div>
+    );
+}
+
 // ── Composant racine ──────────────────────────────────────────────────────────
 
 /**
- * Composant racine de l'application Fractions CE1.
- *
- * Orchestre la navigation inter-modules et délègue le rendu à chaque vue.
- * La Navbar est fixée en haut (position: fixed) ; `pt-14` compense
- * la hauteur de la barre (h-14 = 3.5 rem) pour éviter tout chevauchement.
- *
  * @returns {JSX.Element}
  */
 export default function App() {
     const [vueActive, setVueActive] = useState(VUE_INITIALE);
     const [seanceDebloquee, setSeanceDebloquee] = useState(1);
 
-    /**
-     * Rendu conditionnel de la vue active.
-     * @returns {JSX.Element}
-     */
     function renderVue() {
         switch (vueActive) {
             case VUES.JEU_DE_CARTES:
@@ -155,26 +142,14 @@ export default function App() {
 
     return (
         <div className="min-h-screen flex flex-col bg-slate-50">
-            {/* Navbar fixe — identité visuelle micetf.fr */}
+            {/* Navbar fixe */}
             <Navbar vueActive={vueActive} onNaviguer={setVueActive} />
 
-            {/*
-             * pt-14 : compense la hauteur fixe de la navbar (h-14 = 3.5 rem)
-             * afin que le contenu ne se retrouve pas masqué derrière elle.
-             */}
+            {/* pt-14 : compense la hauteur fixe de la navbar (h-14 = 3.5 rem) */}
             <main className="flex-1 pt-14">{renderVue()}</main>
-        </div>
-    );
-}
 
-/**
- * Vue M2 — Jeu de cartes.
- * @returns {JSX.Element}
- */
-function VueJeuCartes() {
-    return (
-        <div className="max-w-3xl mx-auto p-6">
-            <JeuCartes />
+            {/* Pied de page global — référence institutionnelle */}
+            <PiedDePage />
         </div>
     );
 }
