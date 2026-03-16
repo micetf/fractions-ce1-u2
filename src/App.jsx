@@ -1,6 +1,7 @@
 /**
  * @fileoverview Composant racine — navigation par useState.
  *
+ * Sprint 13b : BilanS6 → ModuleM4 (une ligne).
  * Sprint 12 : intégration de la Navbar écosystème micetf.fr.
  * Sprint 11 : M4 BilanS6 remplace le placeholder EvaluationFormative.
  * Sprint 2–10 : M2 JeuCartes (sessions A/B/C paires + triplets).
@@ -16,7 +17,7 @@ import { BandeRepertoire } from "./components/BandeRepertoire";
 import { JeuCartes } from "./components/JeuCartes";
 import { TableauDeBord } from "./components/placeholders";
 import { ModelageInteractif } from "./components/ModelageInteractif";
-import { BilanS6 } from "./components/EvaluationFormative";
+import { ModuleM4 } from "./components/EvaluationFormative";
 import Navbar from "./components/Navbar/Navbar";
 
 // ── Vues disponibles ──────────────────────────────────────────────────────────
@@ -159,7 +160,7 @@ export default function App() {
             case VUES.EVALUATION:
                 return (
                     <div className="max-w-5xl mx-auto p-6">
-                        <BilanS6 />
+                        <ModuleM4 />
                     </div>
                 );
             default:
