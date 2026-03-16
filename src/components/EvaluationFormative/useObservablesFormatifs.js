@@ -15,6 +15,13 @@
  *   - Liste d'élèves  : "fractions-ce1.eleves"        → useClasse
  *   - Saisies obs.    : "fractions-ce1.observables"   → useLocalStorage
  *
+ * Correction sprint 13b (bug "pas d'élève ajouté") :
+ *   ajouterEleve et supprimerEleve sont désormais exposés par ce hook.
+ *   ObservablesFormatifs ne doit PAS appeler useClasse() directement :
+ *   deux instances distinctes de useClasse créeraient deux useState séparés
+ *   partageant le même localStorage mais ne se synchronisant pas entre eux.
+ *   Ce hook est la source unique de vérité pour la liste des élèves dans M4.
+ *
  * Structure de "fractions-ce1.observables" :
  *   {
  *     [seanceId: string]: {          // ex. "S1"
@@ -82,17 +89,23 @@ export const VALEURS_UI = {
  * Hook de logique des observables formatifs S1–S6.
  *
  * @returns {{
- *   eleves:             import('../../hooks/useClasse').Eleve[],
- *   saisies:            Record<string, Record<string, Record<string, string>>>,
- *   getSaisie:          (seanceId: string, obsId: string, eleveId: string) => string|null,
- *   setSaisie:          (seanceId: string, obsId: string, eleveId: string, valeur: string|null) => void,
- *   getSynthese:        (seanceId: string) => SyntheseObservable[],
- *   getCompletionSeance:(seanceId: string) => 'non_commence'|'en_cours'|'complet',
+ *   eleves:               import('../../hooks/useClasse').Eleve[],
+ *   ajouterEleve:         (prenom: string) => void,
+ *   supprimerEleve:       (id: string) => void,
+ *   saisies:              Record<string, Record<string, Record<string, string>>>,
+ *   getSaisie:            (seanceId: string, obsId: string, eleveId: string) => string|null,
+ *   setSaisie:            (seanceId: string, obsId: string, eleveId: string, valeur: string|null) => void,
+ *   getSynthese:          (seanceId: string) => SyntheseObservable[],
+ *   getCompletionSeance:  (seanceId: string) => 'non_commence'|'en_cours'|'complet',
  *   reinitialiserSaisies: () => void,
  * }}
  */
 export function useObservablesFormatifs() {
-    const { eleves } = useClasse();
+    // Instance unique de useClasse pour ce hook.
+    // ObservablesFormatifs consomme ajouterEleve/supprimerEleve depuis ici —
+    // ne pas appeler useClasse() directement dans le composant.
+    const { eleves, ajouterEleve, supprimerEleve } = useClasse();
+
     const [saisies, setSaisies] = useLocalStorage(CLE_OBSERVABLES, {});
 
     /**
@@ -125,7 +138,6 @@ export function useObservablesFormatifs() {
                 const obs = seance[obsId] ?? {};
 
                 if (valeur === null) {
-                    // Suppression de la saisie
                     const { [eleveId]: _, ...obsReste } = obs;
                     return {
                         ...prev,
@@ -219,7 +231,6 @@ export function useObservablesFormatifs() {
      * Réinitialise toutes les saisies d'observables (toutes séances).
      *
      * ⚠ Action destructive. Ne touche pas la liste des élèves (partagée).
-     * À n'appeler que depuis un point d'entrée UI explicite avec confirmation.
      */
     const reinitialiserSaisies = useCallback(() => {
         setSaisies({});
@@ -227,6 +238,8 @@ export function useObservablesFormatifs() {
 
     return {
         eleves,
+        ajouterEleve,
+        supprimerEleve,
         saisies,
         getSaisie,
         setSaisie,

@@ -2,26 +2,30 @@
  * @fileoverview GestionClasse — panneau de gestion de la liste des élèves.
  *
  * Permet à l'enseignant de saisir les prénoms des élèves dont il veut
- * enregistrer l'auto-évaluation du bilan de séquence.
+ * enregistrer les données (observables ou auto-évaluation).
  *
  * Source : RF-M4-01 (SRS) — « L'enseignant peut saisir une liste d'élèves
  * (classe virtuelle). Cette liste est réutilisée pour toutes les séances. »
  *
- * Note : RF-M4-01 est pleinement traité en sprint 12 (persistance inter-séances).
- * Ce composant assure la saisie en mémoire pour le bilan S6.
+ * Correction sprint 13b :
+ *   onReinitialiser est désormais optionnel (PropTypes.func, sans isRequired).
+ *   Le bouton « Réinitialiser » n'est rendu que si la prop est fournie.
+ *   Justification : dans ObservablesFormatifs, la réinitialisation globale de
+ *   la liste est réservée au sprint 14 (tableau de bord M0). Passer undefined
+ *   provoquait un onClick silencieux et un avertissement PropTypes.
  */
 
 import { useState } from "react";
 import PropTypes from "prop-types";
 
 /**
- * @param {Object}   props
- * @param {Array}    props.eleves             - Liste d'élèves actuels
- * @param {string|null} props.eleveSelectionne - Id de l'élève sélectionné
- * @param {Function} props.onAjouter          - (prenom: string) => void
- * @param {Function} props.onSupprimer        - (id: string) => void
- * @param {Function} props.onSelectionner     - (id: string) => void
- * @param {Function} props.onReinitialiser    - () => void
+ * @param {Object}      props
+ * @param {Array}       props.eleves              - Liste d'élèves actuels
+ * @param {string|null} props.eleveSelectionne    - Id de l'élève sélectionné
+ * @param {Function}    props.onAjouter           - (prenom: string) => void
+ * @param {Function}    props.onSupprimer         - (id: string) => void
+ * @param {Function}    props.onSelectionner      - (id: string) => void
+ * @param {Function}    [props.onReinitialiser]   - () => void — optionnel
  */
 export default function GestionClasse({
     eleves,
@@ -52,7 +56,7 @@ export default function GestionClasse({
                 </h3>
                 <p className="text-xs text-slate-400">
                     Saisissez les prénoms des élèves pour enregistrer leurs
-                    auto-évaluations.
+                    données.
                 </p>
             </div>
 
@@ -66,8 +70,8 @@ export default function GestionClasse({
                     placeholder="Prénom de l'élève…"
                     maxLength={40}
                     className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg
-            focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent
-            placeholder:text-slate-300"
+                        focus:outline-none focus:ring-2 focus:ring-blue-400
+                        focus:border-transparent placeholder:text-slate-300"
                     aria-label="Saisir le prénom d'un élève"
                 />
                 <button
@@ -78,18 +82,21 @@ export default function GestionClasse({
                         "px-3 py-2 rounded-lg text-sm font-semibold transition-colors",
                         saisie.trim()
                             ? "bg-blue-600 text-white hover:bg-blue-700"
-                            : "bg-slate-100 text-slate-300 cursor-not-allowed",
+                            : "bg-slate-100 text-slate-400 cursor-not-allowed",
                     ].join(" ")}
                     aria-label="Ajouter l'élève"
                 >
-                    + Ajouter
+                    Ajouter
                 </button>
             </div>
 
             {/* ── Liste des élèves ── */}
             {eleves.length === 0 ? (
-                <p className="text-xs text-slate-400 italic text-center py-4">
-                    Aucun élève — ajoutez les prénoms ci-dessus.
+                <p
+                    className="text-xs text-slate-400 text-center py-4 border border-dashed
+                    border-slate-200 rounded-lg"
+                >
+                    Aucun élève dans la liste.
                 </p>
             ) : (
                 <ul className="space-y-1 max-h-64 overflow-y-auto">
@@ -112,8 +119,8 @@ export default function GestionClasse({
                                     e.stopPropagation();
                                     onSupprimer(eleve.id);
                                 }}
-                                className="text-slate-300 hover:text-red-400 transition-colors text-base
-                  leading-none"
+                                className="text-slate-300 hover:text-red-400 transition-colors
+                                    text-base leading-none"
                                 aria-label={`Supprimer ${eleve.prenom}`}
                             >
                                 ×
@@ -123,14 +130,14 @@ export default function GestionClasse({
                 </ul>
             )}
 
-            {/* ── Réinitialiser ── */}
-            {eleves.length > 0 && (
+            {/* ── Réinitialiser — rendu uniquement si la prop est fournie ── */}
+            {onReinitialiser && eleves.length > 0 && (
                 <button
                     type="button"
                     onClick={onReinitialiser}
                     className="w-full py-2 text-xs text-slate-400 hover:text-red-500
-            border border-dashed border-slate-200 hover:border-red-300
-            rounded-lg transition-colors"
+                        border border-dashed border-slate-200 hover:border-red-300
+                        rounded-lg transition-colors"
                 >
                     Réinitialiser toute la saisie
                 </button>
@@ -150,5 +157,10 @@ GestionClasse.propTypes = {
     onAjouter: PropTypes.func.isRequired,
     onSupprimer: PropTypes.func.isRequired,
     onSelectionner: PropTypes.func.isRequired,
-    onReinitialiser: PropTypes.func.isRequired,
+    onReinitialiser: PropTypes.func, // optionnel — bouton masqué si absent
+};
+
+GestionClasse.defaultProps = {
+    eleveSelectionne: null,
+    onReinitialiser: undefined,
 };

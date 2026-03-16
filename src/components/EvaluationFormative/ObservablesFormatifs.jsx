@@ -7,17 +7,16 @@
  *   - FicheObservableEleve (saisie individuelle — RF-M4-03 + RF-M4-04)
  *   - SyntheseObservables (vue classe — RF-M4-05)
  *
- * Navigation interne : onglets « Saisie » / « Synthèse ».
- *
  * Sources :
  *   - RF-M4-01 à RF-M4-05 (SRS, section 4.5.1)
- *   - observables.config.js : SEANCES, getObservablesParSeance
  *
- * Correction sprint 13b (ESLint react-hooks/set-state-in-effect) :
- *   Les deux useEffect qui appelaient setEleveSelectionne de façon synchrone
- *   ont été supprimés. L'élève effectivement affiché est désormais dérivé
- *   directement au rendu (eleveEffectifId), sans effet secondaire.
- *   Source : https://react.dev/learn/you-might-not-need-an-effect
+ * Correction sprint 13b (bug "pas d'élève ajouté") :
+ *   useClasse() n'est plus appelé directement ici.
+ *   ajouterEleve et supprimerEleve sont fournis par useObservablesFormatifs,
+ *   qui est la source unique de vérité pour la liste des élèves dans ce module.
+ *   Appeler useClasse() en parallèle créait deux useState distincts sur la même
+ *   clé localStorage : les mises à jour de l'une n'étaient pas visibles par
+ *   l'autre, rendant l'ajout d'élèves silencieusement inopérant.
  *
  * @module components/EvaluationFormative/ObservablesFormatifs
  */
@@ -32,7 +31,6 @@ import { useObservablesFormatifs } from "./useObservablesFormatifs";
 import GestionClasse from "./GestionClasse";
 import FicheObservableEleve from "./FicheObservableEleve";
 import SyntheseObservables from "./SyntheseObservables";
-import { useClasse } from "../../hooks/useClasse";
 
 /** @type {('saisie'|'synthese')} */
 const ONGLETS = { SAISIE: "saisie", SYNTHESE: "synthese" };
@@ -79,28 +77,26 @@ BadgeCompletion.propTypes = {
 export default function ObservablesFormatifs() {
     const [seanceActive, setSeanceActive] = useState("S1");
     const [onglet, setOnglet] = useState(ONGLETS.SAISIE);
-
-    // eleveSelectionne : intention de l'utilisateur (peut pointer un élève supprimé)
     const [eleveSelectionne, setEleveSelectionne] = useState(null);
 
-    const { ajouterEleve, supprimerEleve } = useClasse();
-
-    const { eleves, getSaisie, setSaisie, getSynthese, getCompletionSeance } =
-        useObservablesFormatifs();
+    // Source unique de vérité — ne pas appeler useClasse() en parallèle.
+    const {
+        eleves,
+        ajouterEleve,
+        supprimerEleve,
+        getSaisie,
+        setSaisie,
+        getSynthese,
+        getCompletionSeance,
+    } = useObservablesFormatifs();
 
     const observables = getObservablesParSeance(seanceActive);
     const syntheses = getSynthese(seanceActive);
 
     /**
      * Élève effectivement affiché — dérivé au rendu, sans useEffect.
-     *
-     * Règle de dérivation :
-     *   1. Liste vide → null.
-     *   2. eleveSelectionne pointe un élève existant → on le conserve.
-     *   3. Sinon (null initial ou élève supprimé) → premier de la liste.
-     *
-     * Pas de setState synchrone dans un effet : la valeur est calculée
-     * directement, React ne provoque aucun rendu supplémentaire.
+     * Règle : liste vide → null ; sélection valide → conservée ;
+     * sélection invalide ou null → premier élève de la liste.
      */
     const eleveEffectifId =
         eleves.length === 0
@@ -148,8 +144,6 @@ export default function ObservablesFormatifs() {
                                 onClick={() => {
                                     setSeanceActive(s.id);
                                     setOnglet(ONGLETS.SAISIE);
-                                    // Réinitialise l'intention de sélection :
-                                    // eleveEffectifId basculera sur eleves[0]
                                     setEleveSelectionne(null);
                                 }}
                                 className={[
@@ -175,7 +169,6 @@ export default function ObservablesFormatifs() {
                         );
                     })}
                 </div>
-                {/* Titre de la séance active */}
                 <p className="text-xs text-slate-500 mt-2 italic">
                     {SEANCES.find((s) => s.id === seanceActive)?.titre}
                 </p>
@@ -214,8 +207,7 @@ export default function ObservablesFormatifs() {
                             onAjouter={ajouterEleve}
                             onSupprimer={supprimerEleve}
                             onSelectionner={setEleveSelectionne}
-                            // onReinitialiser non exposé ici (action globale, sprint 14)
-                            onReinitialiser={undefined}
+                            // onReinitialiser absent : bouton masqué (sprint 14)
                         />
                     </div>
 
@@ -263,7 +255,6 @@ export default function ObservablesFormatifs() {
                     </div>
                 </div>
             ) : (
-                /* Onglet Synthèse — RF-M4-05 */
                 <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                     <SyntheseObservables
                         syntheses={syntheses}
