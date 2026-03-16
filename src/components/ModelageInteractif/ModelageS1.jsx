@@ -5,13 +5,10 @@
  *
  * Deux onglets :
  *   ① Modelage (phase ②, 7 min)
- *      Navigation TOUT → PARTAGE → COLORIE
- *      avec sélecteurs de fraction (1/2, 1/4, 1/8) et de forme.
- *
  *   ② Mise en commun (phase ④, 8 min)
- *      Les 3 corpus prescrits par la fiche S1.
  *
- * Usage : projection sur tableau numérique interactif (TNI) ou vidéoprojecteur.
+ * Sprint RNF-02 : ajout de la prop modeProjection.
+ *   taille SVG : 150 → 300 en mode projection (lisibilité 4 m, RNF-02).
  */
 
 import { useState } from "react";
@@ -22,9 +19,6 @@ import CorpusMiseEnCommun from "./CorpusMiseEnCommun";
 
 // ── Sélecteur de fraction ─────────────────────────────────────────────────────
 
-/**
- * @param {{ fractionIndex: number, onChange: (i: number) => void }} props
- */
 function SelecteurFraction({ fractionIndex, onChange }) {
     return (
         <div className="flex items-center gap-2 flex-wrap">
@@ -58,9 +52,6 @@ SelecteurFraction.propTypes = {
 
 // ── Sélecteur de forme ────────────────────────────────────────────────────────
 
-/**
- * @param {{ formeIndex: number, onChange: (i: number) => void }} props
- */
 function SelecteurForme({ formeIndex, onChange }) {
     return (
         <div className="flex items-center gap-2 flex-wrap">
@@ -94,17 +85,13 @@ SelecteurForme.propTypes = {
 
 // ── Indicateur d'étape ────────────────────────────────────────────────────────
 
+const ORDRE_ETAPES = [ETAPE.TOUT, ETAPE.PARTAGE, ETAPE.COLORIE];
 const ETAPES_LABEL = {
     [ETAPE.TOUT]: "① Le tout",
     [ETAPE.PARTAGE]: "② Je partage",
     [ETAPE.COLORIE]: "③ Je colorie",
 };
 
-const ORDRE_ETAPES = [ETAPE.TOUT, ETAPE.PARTAGE, ETAPE.COLORIE];
-
-/**
- * @param {{ etape: string, onGo: (e: string) => void }} props
- */
 function IndicateurEtapes({ etape, onGo }) {
     return (
         <div className="flex items-center gap-1">
@@ -117,7 +104,7 @@ function IndicateurEtapes({ etape, onGo }) {
                         etape === e
                             ? "bg-blue-600 text-white shadow-sm"
                             : ORDRE_ETAPES.indexOf(etape) > i
-                              ? "bg-emerald-100 text-emerald-700"
+                              ? "bg-blue-100 text-blue-700"
                               : "bg-slate-100 text-slate-400",
                     ].join(" ")}
                 >
@@ -133,27 +120,21 @@ IndicateurEtapes.propTypes = {
     onGo: PropTypes.func.isRequired,
 };
 
-// ── Bulle de texte (pensée à voix haute) ─────────────────────────────────────
+// ── Bulle de texte ────────────────────────────────────────────────────────────
 
-/**
- * @param {{ titre: string, texte: string, question?: string, reponseAttendue?: string }} props
- */
 function BulleTexte({ titre, texte, question, reponseAttendue }) {
     const [reponseVisible, setReponseVisible] = useState(false);
-
     return (
         <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 space-y-2">
             <p className="text-xs font-bold text-blue-800 uppercase tracking-wide">
                 {titre}
             </p>
             <p className="text-sm text-blue-700 leading-snug">{texte}</p>
-
             {question && (
                 <p className="text-xs italic text-blue-600 pt-1">
                     ❓ {question}
                 </p>
             )}
-
             {reponseAttendue && (
                 <div className="pt-1">
                     {!reponseVisible ? (
@@ -185,9 +166,9 @@ BulleTexte.propTypes = {
 // ── Onglet Modelage ───────────────────────────────────────────────────────────
 
 /**
- * Phase ② du modelage : stepper TOUT → PARTAGE → COLORIE.
+ * @param {{ modeProjection: boolean }} props
  */
-function OngletModelage() {
+function OngletModelage({ modeProjection }) {
     const {
         fractionIndex,
         formeIndex,
@@ -208,7 +189,6 @@ function OngletModelage() {
 
     return (
         <div className="space-y-4">
-            {/* ── Sélecteurs ── */}
             <div className="space-y-2">
                 <SelecteurFraction
                     fractionIndex={fractionIndex}
@@ -219,24 +199,21 @@ function OngletModelage() {
                     onChange={setFormeIndex}
                 />
             </div>
-
-            {/* ── Indicateur d'étapes ── */}
             <IndicateurEtapes etape={etape} onGo={setEtape} />
 
-            {/* ── Zone principale : SVG + texte ── */}
-            <div className="flex flex-col sm:flex-row items-center gap-5 bg-white rounded-2xl border border-slate-200 p-5">
-                {/* SVG centré */}
+            <div
+                className="flex flex-col sm:flex-row items-center gap-5 bg-white
+                rounded-2xl border border-slate-200 p-5"
+            >
                 <div className="flex items-center justify-center shrink-0">
                     <FormePartageeSVG
                         forme={forme.id}
                         denominateur={fraction.denominateur}
                         etat={etape}
                         partColoriee={0}
-                        taille={150}
+                        taille={modeProjection ? 300 : 150}
                     />
                 </div>
-
-                {/* Texte pensée à voix haute */}
                 <div className="flex-1 w-full">
                     <BulleTexte
                         titre={texteCourant.titre}
@@ -247,30 +224,27 @@ function OngletModelage() {
                 </div>
             </div>
 
-            {/* ── Navigation ── */}
             <div className="flex items-center justify-between gap-3">
                 <button
                     type="button"
                     onClick={reculer}
                     disabled={!peutReculer}
                     className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors
-            disabled:opacity-30 disabled:cursor-not-allowed
-            bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        disabled:opacity-30 disabled:cursor-not-allowed
+                        bg-slate-100 text-slate-600 hover:bg-slate-200"
                 >
                     ← Précédent
                 </button>
-
                 <span className="text-xs text-slate-400">
                     {fraction.nomLettres} · {forme.label}
                 </span>
-
                 <button
                     type="button"
                     onClick={avancer}
                     disabled={!peutAvancer}
                     className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors
-            disabled:opacity-30 disabled:cursor-not-allowed
-            bg-blue-600 text-white hover:bg-blue-700"
+                        disabled:opacity-30 disabled:cursor-not-allowed
+                        bg-blue-600 text-white hover:bg-blue-700"
                 >
                     Suivant →
                 </button>
@@ -279,18 +253,22 @@ function OngletModelage() {
     );
 }
 
+OngletModelage.propTypes = { modeProjection: PropTypes.bool };
+OngletModelage.defaultProps = { modeProjection: false };
+
 // ── Composant principal ───────────────────────────────────────────────────────
 
 /**
  * ModelageS1 — outil de projection pour la séance 1.
- * @returns {JSX.Element}
+ *
+ * @param {Object}  props
+ * @param {boolean} [props.modeProjection=false] — SVG agrandis pour TBI (RNF-02)
  */
-export default function ModelageS1() {
-    const [onglet, setOnglet] = useState("modelage"); // 'modelage' | 'mec'
+export default function ModelageS1({ modeProjection }) {
+    const [onglet, setOnglet] = useState("modelage");
 
     return (
         <div className="space-y-4">
-            {/* ── En-tête ── */}
             <div className="flex flex-wrap items-center justify-between gap-3 px-1">
                 <div>
                     <h2 className="font-bold text-slate-700 text-base">
@@ -305,8 +283,7 @@ export default function ModelageS1() {
                 </span>
             </div>
 
-            {/* ── Onglets ── */}
-            <div className="flex gap-1 border-b border-slate-200 pb-0">
+            <div className="flex gap-1 border-b border-slate-200">
                 {[
                     { id: "modelage", label: "② Modelage", duree: "7 min" },
                     { id: "mec", label: "④ Mise en commun", duree: "8 min" },
@@ -329,11 +306,15 @@ export default function ModelageS1() {
                 ))}
             </div>
 
-            {/* ── Contenu ── */}
             <div className="pt-1">
-                {onglet === "modelage" && <OngletModelage />}
+                {onglet === "modelage" && (
+                    <OngletModelage modeProjection={modeProjection} />
+                )}
                 {onglet === "mec" && <CorpusMiseEnCommun />}
             </div>
         </div>
     );
 }
+
+ModelageS1.propTypes = { modeProjection: PropTypes.bool };
+ModelageS1.defaultProps = { modeProjection: false };

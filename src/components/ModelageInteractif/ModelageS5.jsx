@@ -1,21 +1,11 @@
 /**
  * @fileoverview ModelageS5 — modelage interactif pour la séance 5.
  *
- * Outil de projection pour l'enseignant (55 min, phases ② et ④).
- *
- * Deux onglets :
- *   ② Modelage (10 min)
- *      Construction progressive de l'écriture fractionnaire :
- *      BAS → TRAIT → COMPLET, avec annotations pédagogiques.
- *      Contre-exemples prescrits (fiche S5) : 8/1, 1-8, 18.
- *
- *   ④ Mise en commun (11 min)
- *      Triplets (dont un erroné), tableau de décomposition,
- *      tableau des 3 représentations.
- *
- * Note de conception : le sélecteur de forme est absent (S5 ne modélise
- * pas une forme géométrique mais l'écriture elle-même). La carte
- * CarteFractionSVG est l'élément central du modelage.
+ * Sprint RNF-02 : ajout de la prop modeProjection.
+ *   CarteFractionSVG (carte principale) : taille 120 → 240 en mode projection.
+ *   FormePartageeSVG (image référence)  : taille  80 → 160 en mode projection.
+ *   CarteFractionSVG (contre-exemples)  : taille  90 → 180 en mode projection.
+ *   BandeRepertoire (onglet ref-répertoire) : modeProjection transmis.
  */
 
 import { useState } from "react";
@@ -26,48 +16,30 @@ import CarteFractionSVG from "./CarteFractionSVG";
 import CorpusMiseEnCommunS5 from "./CorpusMiseEnCommunS5";
 import { BandeRepertoire } from "../BandeRepertoire";
 
-// ── Constantes ────────────────────────────────────────────────────────────────
-
 const ETAPES_LABEL = {
     [ETAPE_S5.BAS]: "① Chiffre du bas",
     [ETAPE_S5.TRAIT]: "② Trait de fraction",
     [ETAPE_S5.COMPLET]: "③ Chiffre du haut",
 };
-
 const ORDRE_ETAPES = [ETAPE_S5.BAS, ETAPE_S5.TRAIT, ETAPE_S5.COMPLET];
 
-// ── Contre-exemples (fiche S5, phase ②) ──────────────────────────────────────
-
-/**
- * Génère les 3 contre-exemples prescrits par la fiche S5 (phase ②)
- * en fonction de la fraction courante.
- *
- * @param {number} denominateur
- * @param {string} nomLettres   - ex. « un quart »
- * @returns {Array<{ id: string, explication: string }>}
- */
 function getContreExemples(denominateur, nomLettres) {
     return [
         {
             id: "inverse",
-            explication: `${denominateur}/1 — Ce n'est PAS ${nomLettres}. Le ${denominateur} doit être EN BAS. Si je mets ${denominateur} en haut et 1 en bas, ce serait comme dire « je prends ${denominateur} parts quand le tout n'en a qu'une » — ça n'a aucun sens pour une fraction unitaire.`,
+            explication: `${denominateur}/1 — Ce n'est PAS ${nomLettres}. Le ${denominateur} doit être EN BAS.`,
         },
         {
             id: "tiret",
-            explication: `1-${denominateur} (avec un tiret) — L'écriture fractionnaire utilise toujours un trait horizontal. Un tiret oblique ou court n'est pas le trait de fraction.`,
+            explication: `1-${denominateur} (avec un tiret) — L'écriture fractionnaire utilise un trait horizontal.`,
         },
         {
             id: "sanstrait",
-            explication: `1${denominateur} (sans trait) — Sans le trait de fraction, ce n'est plus une écriture de fraction. On ne lit pas « ${nomLettres} » mais un nombre entier.`,
+            explication: `1${denominateur} (sans trait) — Sans le trait, ce n'est plus une fraction.`,
         },
     ];
 }
 
-// ── Sélecteur de fraction ─────────────────────────────────────────────────────
-
-/**
- * @param {{ fractionIndex: number, onChange: (i: number) => void }} props
- */
 function SelecteurFraction({ fractionIndex, onChange }) {
     return (
         <div className="flex items-center gap-2 flex-wrap">
@@ -93,17 +65,11 @@ function SelecteurFraction({ fractionIndex, onChange }) {
         </div>
     );
 }
-
 SelecteurFraction.propTypes = {
     fractionIndex: PropTypes.number.isRequired,
     onChange: PropTypes.func.isRequired,
 };
 
-// ── Indicateur d'étapes ───────────────────────────────────────────────────────
-
-/**
- * @param {{ etape: string, onGo: (e: string) => void }} props
- */
 function IndicateurEtapes({ etape, onGo }) {
     return (
         <div className="flex items-center gap-1 flex-wrap">
@@ -126,20 +92,13 @@ function IndicateurEtapes({ etape, onGo }) {
         </div>
     );
 }
-
 IndicateurEtapes.propTypes = {
     etape: PropTypes.string.isRequired,
     onGo: PropTypes.func.isRequired,
 };
 
-// ── Bulle de texte ────────────────────────────────────────────────────────────
-
-/**
- * @param {{ titre: string, texte: string, question?: string, reponseAttendue?: string }} props
- */
 function BulleTexte({ titre, texte, question, reponseAttendue }) {
     const [reponseVisible, setReponseVisible] = useState(false);
-
     return (
         <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 space-y-2">
             <p className="text-xs font-bold text-blue-800 uppercase tracking-wide">
@@ -171,7 +130,6 @@ function BulleTexte({ titre, texte, question, reponseAttendue }) {
         </div>
     );
 }
-
 BulleTexte.propTypes = {
     titre: PropTypes.string.isRequired,
     texte: PropTypes.string.isRequired,
@@ -179,15 +137,13 @@ BulleTexte.propTypes = {
     reponseAttendue: PropTypes.string,
 };
 
-// ── Panneau contre-exemples ───────────────────────────────────────────────────
-
 /**
- * Les 3 contre-exemples prescrits, tous affichés d'un coup.
- * @param {{ denominateur: number, nomLettres: string }} props
+ * @param {{ denominateur: number, nomLettres: string, modeProjection: boolean }} props
  */
-function PanneauContreExemples({ denominateur, nomLettres }) {
+function PanneauContreExemples({ denominateur, nomLettres, modeProjection }) {
     const [visible, setVisible] = useState(false);
     const contreExemples = getContreExemples(denominateur, nomLettres);
+    const tailleCart = modeProjection ? 180 : 90;
 
     return (
         <div>
@@ -205,7 +161,6 @@ function PanneauContreExemples({ denominateur, nomLettres }) {
                     ? "← Masquer les contre-exemples"
                     : "✗ Afficher les contre-exemples"}
             </button>
-
             {visible && (
                 <div className="mt-3 space-y-3">
                     <p className="text-xs text-slate-500 italic px-1">
@@ -220,7 +175,7 @@ function PanneauContreExemples({ denominateur, nomLettres }) {
                                 <CarteFractionSVG
                                     denominateur={denominateur}
                                     etat={ce.id}
-                                    taille={90}
+                                    taille={tailleCart}
                                 />
                                 <p className="text-xs text-red-700 text-center leading-snug">
                                     {ce.explication}
@@ -233,15 +188,19 @@ function PanneauContreExemples({ denominateur, nomLettres }) {
         </div>
     );
 }
-
 PanneauContreExemples.propTypes = {
     denominateur: PropTypes.number.isRequired,
     nomLettres: PropTypes.string.isRequired,
+    modeProjection: PropTypes.bool,
 };
+PanneauContreExemples.defaultProps = { modeProjection: false };
 
 // ── Onglet Modelage ───────────────────────────────────────────────────────────
 
-function OngletModelage() {
+/**
+ * @param {{ modeProjection: boolean }} props
+ */
+function OngletModelage({ modeProjection }) {
     const {
         fractionIndex,
         etape,
@@ -257,7 +216,6 @@ function OngletModelage() {
 
     const texteCourant = textes[etape];
 
-    // Forme à afficher à côté de la carte (première forme disponible pour cette fraction)
     const formesParDenominateur = {
         2: { forme: "carre", denominateur: 2 },
         3: { forme: "disque", denominateur: 3 },
@@ -269,33 +227,33 @@ function OngletModelage() {
     };
     const formeConfig = formesParDenominateur[fraction.denominateur];
 
+    const tailleCarteF = modeProjection ? 240 : 120;
+    const tailleRefF = modeProjection ? 160 : 80;
+
     return (
         <div className="space-y-4">
-            {/* Sélecteur de fraction */}
             <SelecteurFraction
                 fractionIndex={fractionIndex}
                 onChange={setFractionIndex}
             />
-
-            {/* Indicateur d'étapes */}
             <IndicateurEtapes etape={etape} onGo={setEtape} />
 
-            {/* Zone principale : carte + image + texte */}
-            <div className="flex flex-col sm:flex-row items-center gap-5 bg-white rounded-2xl border border-slate-200 p-5">
-                {/* Colonne visuelle : carte en construction + image référence */}
+            <div
+                className="flex flex-col sm:flex-row items-center gap-5 bg-white
+                rounded-2xl border border-slate-200 p-5"
+            >
                 <div className="flex items-end gap-3 shrink-0">
                     <div className="flex flex-col items-center gap-1">
                         <CarteFractionSVG
                             denominateur={fraction.denominateur}
                             etat={etape}
                             annotations={etape === ETAPE_S5.COMPLET}
-                            taille={120}
+                            taille={tailleCarteF}
                         />
                         <span className="text-xs text-slate-400 italic">
                             en chiffres
                         </span>
                     </div>
-                    {/* Image de référence (= le tout partagé) */}
                     {formeConfig && (
                         <div className="flex flex-col items-center gap-1">
                             <FormePartageeSVG
@@ -303,7 +261,7 @@ function OngletModelage() {
                                 denominateur={formeConfig.denominateur}
                                 etat="colorie"
                                 partColoriee={0}
-                                taille={80}
+                                taille={tailleRefF}
                             />
                             <span className="text-xs text-slate-400 italic">
                                 image
@@ -311,8 +269,6 @@ function OngletModelage() {
                         </div>
                     )}
                 </div>
-
-                {/* Texte du modelage */}
                 <div className="flex-1 w-full">
                     <BulleTexte
                         titre={texteCourant.titre}
@@ -323,15 +279,14 @@ function OngletModelage() {
                 </div>
             </div>
 
-            {/* Navigation */}
             <div className="flex items-center justify-between">
                 <button
                     type="button"
                     onClick={reculer}
                     disabled={!peutReculer}
                     className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors
-            disabled:opacity-30 disabled:cursor-not-allowed
-            bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        disabled:opacity-30 disabled:cursor-not-allowed
+                        bg-slate-100 text-slate-600 hover:bg-slate-200"
                 >
                     ← Précédent
                 </button>
@@ -340,46 +295,47 @@ function OngletModelage() {
                     onClick={avancer}
                     disabled={!peutAvancer}
                     className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors
-            disabled:opacity-30 disabled:cursor-not-allowed
-            bg-blue-600 text-white hover:bg-blue-700"
+                        disabled:opacity-30 disabled:cursor-not-allowed
+                        bg-blue-600 text-white hover:bg-blue-700"
                 >
                     Suivant →
                 </button>
             </div>
 
-            {/* Contre-exemples */}
             <PanneauContreExemples
                 denominateur={fraction.denominateur}
                 nomLettres={fraction.nomLettres}
+                modeProjection={modeProjection}
             />
 
-            {/* Note 1/10 */}
             {fraction.denominateur === 10 && (
-                <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                <div
+                    className="text-xs text-amber-700 bg-amber-50 border border-amber-200
+                    rounded-xl px-3 py-2"
+                >
                     <span className="font-semibold">
                         ⚠ Erreur très fréquente :
                     </span>{" "}
-                    1/10 écrit « 1/1 » suivi d'un 0 séparé. Le 10 est un seul
-                    nombre à deux chiffres — il va tout entier sous le trait.
-                    Fiche S5, phase ③b.
+                    1/10 écrit « 1/1 » suivi d'un 0 séparé. Le 10 va tout entier
+                    sous le trait. Fiche S5, phase ③b.
                 </div>
             )}
         </div>
     );
 }
+OngletModelage.propTypes = { modeProjection: PropTypes.bool };
+OngletModelage.defaultProps = { modeProjection: false };
 
 // ── Composant principal ───────────────────────────────────────────────────────
 
 /**
- * ModelageS5 — outil de projection pour la séance 5.
- * @returns {JSX.Element}
+ * @param {Object}  props
+ * @param {boolean} [props.modeProjection=false]
  */
-export default function ModelageS5() {
+export default function ModelageS5({ modeProjection }) {
     const [onglet, setOnglet] = useState("modelage");
-
     return (
         <div className="space-y-4">
-            {/* En-tête */}
             <div className="flex flex-wrap items-center justify-between gap-3 px-1">
                 <div>
                     <h2 className="font-bold text-slate-700 text-base">
@@ -395,7 +351,6 @@ export default function ModelageS5() {
                 </span>
             </div>
 
-            {/* Onglets */}
             <div className="flex gap-1 border-b border-slate-200">
                 {[
                     { id: "modelage", label: "② Modelage", duree: "10 min" },
@@ -424,14 +379,20 @@ export default function ModelageS5() {
                 ))}
             </div>
 
-            {/* Contenu */}
             <div className="pt-1">
-                {onglet === "modelage" && <OngletModelage />}
+                {onglet === "modelage" && (
+                    <OngletModelage modeProjection={modeProjection} />
+                )}
                 {onglet === "ref-repertoire" && (
-                    <BandeRepertoire seanceDebloquee={5} modeProjection />
+                    <BandeRepertoire
+                        seanceDebloquee={5}
+                        modeProjection={modeProjection}
+                    />
                 )}
                 {onglet === "mec" && <CorpusMiseEnCommunS5 />}
             </div>
         </div>
     );
 }
+ModelageS5.propTypes = { modeProjection: PropTypes.bool };
+ModelageS5.defaultProps = { modeProjection: false };
