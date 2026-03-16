@@ -13,15 +13,9 @@
  *   - Fiche S6, section « Bilan de séquence — session C »
  *   - RF-M4-06 à RF-M4-09 (SRS, section 4.5.2)
  *
- * Migration sprint 13a :
- *   - useBilanS6 délègue désormais la liste d'élèves à useClasse (persistance).
- *   - reinitialiser() → reinitialiserResultats() : ne touche plus la liste.
- *
- * Correction sprint 13b (ESLint react-hooks/set-state-in-effect) :
- *   Le useEffect qui appelait setEleveSelectionne de façon synchrone a été
- *   supprimé. L'élève effectivement affiché est dérivé au rendu (eleveEffectifId),
- *   sans effet secondaire.
- *   Source : https://react.dev/learn/you-might-not-need-an-effect
+ * Approximation documentée (RF-M4-09) :
+ *   L'alerte collective est détectée via l'item AE-03, faute de granularité
+ *   par fraction dans la grille d'auto-évaluation. Voir AlerteCollective.jsx.
  */
 
 import { useState } from "react";
@@ -43,8 +37,6 @@ const ONGLETS = { SAISIE: "saisie", SYNTHESE: "synthese" };
  */
 export default function BilanS6() {
     const [onglet, setOnglet] = useState(ONGLETS.SAISIE);
-
-    // eleveSelectionne : intention de l'utilisateur (peut pointer un élève supprimé)
     const [eleveSelectionne, setEleveSelectionne] = useState(null);
 
     const {
@@ -61,12 +53,8 @@ export default function BilanS6() {
 
     /**
      * Élève effectivement affiché — dérivé au rendu, sans useEffect.
-     *
-     * Règle de dérivation :
-     *   1. Liste vide → null.
-     *   2. eleveSelectionne pointe un élève existant → on le conserve.
-     *   3. Sinon (null initial ou élève supprimé) → dernier ajouté (fin du tableau),
-     *      pour reproduire le comportement attendu après un ajout.
+     * Règle : liste vide → null ; sélection valide → conservée ;
+     * sélection invalide ou null → dernier ajouté.
      */
     const eleveEffectifId =
         eleves.length === 0
@@ -78,21 +66,12 @@ export default function BilanS6() {
     const eleveCourant = idxCourant >= 0 ? eleves[idxCourant] : null;
     const aSuivant = idxCourant >= 0 && idxCourant < eleves.length - 1;
 
-    /** Passe à l'élève suivant dans la liste (navigation séquentielle). */
     function allerEleveSuivant() {
         if (aSuivant) setEleveSelectionne(eleves[idxCourant + 1].id);
     }
 
-    /**
-     * Supprime un élève.
-     * Délègue à useBilanS6 qui nettoie ses résultats et retire de la liste
-     * partagée. La sélection est réinitialisée : eleveEffectifId basculera
-     * automatiquement sur le dernier élève restant au prochain rendu.
-     */
     function handleSupprimer(id) {
         supprimerEleve(id);
-        // Si l'élève supprimé était sélectionné, on efface l'intention :
-        // eleveEffectifId choisira automatiquement un autre élève.
         if (eleveSelectionne === id) setEleveSelectionne(null);
     }
 
@@ -110,7 +89,6 @@ export default function BilanS6() {
                             décisions pédagogiques avant la séquence 3.
                         </p>
                     </div>
-                    {/* Compteur de progression */}
                     {eleves.length > 0 && (
                         <div className="text-right">
                             <p className="text-2xl font-bold text-blue-600">
@@ -152,7 +130,6 @@ export default function BilanS6() {
             {/* ── Corps ── */}
             {onglet === ONGLETS.SAISIE ? (
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
-                    {/* Panneau gauche : liste des élèves */}
                     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm self-start">
                         <GestionClasse
                             eleves={eleves}
@@ -163,8 +140,6 @@ export default function BilanS6() {
                             onReinitialiser={reinitialiserResultats}
                         />
                     </div>
-
-                    {/* Panneau droit : saisie pour l'élève sélectionné */}
                     <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                         {eleveCourant ? (
                             <SaisieAutoEval
@@ -177,7 +152,10 @@ export default function BilanS6() {
                                 aSuivant={aSuivant}
                             />
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full min-h-50 gap-3 text-center">
+                            <div
+                                className="flex flex-col items-center justify-center
+                                h-full min-h-50 gap-3 text-center"
+                            >
                                 <span className="text-4xl">👈</span>
                                 <p className="text-slate-400 text-sm">
                                     {eleves.length === 0
@@ -189,7 +167,6 @@ export default function BilanS6() {
                     </div>
                 </div>
             ) : (
-                /* Onglet Synthèse */
                 <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                     <SyntheseBilan
                         syntheses={syntheses}
@@ -201,12 +178,6 @@ export default function BilanS6() {
                     />
                 </div>
             )}
-
-            {/* ── Note de bas de page ── */}
-            <p className="text-xs text-slate-400 text-center pb-2">
-                Sprint 13a/b — Bilan S6 avec persistance localStorage (RF-M4-01
-                à RF-M4-09).
-            </p>
         </div>
     );
 }

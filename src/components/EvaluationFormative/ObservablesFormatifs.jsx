@@ -1,24 +1,13 @@
 /**
  * @fileoverview ObservablesFormatifs — module M4, observables formatifs S1–S6.
  *
- * Conteneur principal du sprint 13b. Orchestre :
+ * Conteneur principal. Orchestre :
  *   - Sélecteur de séance (S1 → S6)
  *   - GestionClasse (liste élèves partagée — RF-M4-01)
  *   - FicheObservableEleve (saisie individuelle — RF-M4-03 + RF-M4-04)
  *   - SyntheseObservables (vue classe — RF-M4-05)
  *
- * Sources :
- *   - RF-M4-01 à RF-M4-05 (SRS, section 4.5.1)
- *
- * Correction sprint 13b (bug "pas d'élève ajouté") :
- *   useClasse() n'est plus appelé directement ici.
- *   ajouterEleve et supprimerEleve sont fournis par useObservablesFormatifs,
- *   qui est la source unique de vérité pour la liste des élèves dans ce module.
- *   Appeler useClasse() en parallèle créait deux useState distincts sur la même
- *   clé localStorage : les mises à jour de l'une n'étaient pas visibles par
- *   l'autre, rendant l'ajout d'élèves silencieusement inopérant.
- *
- * @module components/EvaluationFormative/ObservablesFormatifs
+ * Sources : RF-M4-01 à RF-M4-05 (SRS, section 4.5.1)
  */
 
 import { useState } from "react";
@@ -79,7 +68,6 @@ export default function ObservablesFormatifs() {
     const [onglet, setOnglet] = useState(ONGLETS.SAISIE);
     const [eleveSelectionne, setEleveSelectionne] = useState(null);
 
-    // Source unique de vérité — ne pas appeler useClasse() en parallèle.
     const {
         eleves,
         ajouterEleve,
@@ -93,11 +81,6 @@ export default function ObservablesFormatifs() {
     const observables = getObservablesParSeance(seanceActive);
     const syntheses = getSynthese(seanceActive);
 
-    /**
-     * Élève effectivement affiché — dérivé au rendu, sans useEffect.
-     * Règle : liste vide → null ; sélection valide → conservée ;
-     * sélection invalide ou null → premier élève de la liste.
-     */
     const eleveEffectifId =
         eleves.length === 0
             ? null
@@ -124,7 +107,7 @@ export default function ObservablesFormatifs() {
                 </h2>
                 <p className="text-sm text-slate-500 mt-0.5">
                     Saisie des observables par séance et par élève — régulations
-                    automatiques (RF-M4-01 à RF-M4-05).
+                    automatiques.
                 </p>
             </div>
 
@@ -199,7 +182,6 @@ export default function ObservablesFormatifs() {
             {/* ── Corps ── */}
             {onglet === ONGLETS.SAISIE ? (
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
-                    {/* Panneau gauche : liste de la classe */}
                     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm self-start">
                         <GestionClasse
                             eleves={eleves}
@@ -207,11 +189,8 @@ export default function ObservablesFormatifs() {
                             onAjouter={ajouterEleve}
                             onSupprimer={supprimerEleve}
                             onSelectionner={setEleveSelectionne}
-                            // onReinitialiser absent : bouton masqué (sprint 14)
                         />
                     </div>
-
-                    {/* Panneau droit : fiche observable de l'élève sélectionné */}
                     <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                         {eleveCourant ? (
                             <FicheObservableEleve
@@ -262,10 +241,6 @@ export default function ObservablesFormatifs() {
                     />
                 </div>
             )}
-
-            <p className="text-xs text-slate-400 text-center pb-2">
-                Sprint 13b — Observables formatifs S1–S6 (RF-M4-01 à RF-M4-05).
-            </p>
         </div>
     );
 }

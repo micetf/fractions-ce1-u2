@@ -4,24 +4,7 @@
  * Vue affichée au démarrage de l'application.
  * Accessible à l'enseignant pour piloter la séquence sur les 6 séances.
  *
- * Exigences couvertes :
- *   RF-M0-01 : 6 cartes séances (titre, durée, format, fractions, artefact)
- *   RF-M0-02 : Navigation vers M1–M4 depuis le tableau de bord
- *   RF-M0-03 : Indicateur de complétion des observables M4 par séance
- *   RF-M0-04 : Accès à la bande-répertoire en lecture à tout moment
- *
- * Sources :
- *   - RF-M0-01 à RF-M0-04 (SRS, section 4.1)
- *   - observables.config.js : SEANCES (données fixes issues des fiches)
- *   - fractions.config.js   : FRACTIONS (résolution fractionsIds → chiffres)
- *   - useObservablesFormatifs : getCompletionSeance (RF-M0-03)
- *
- * Architecture (décision sprint 14) :
- *   useObservablesFormatifs() est appelé directement ici (Option A).
- *   Justification : vues exclusives, jamais de coexistence avec
- *   ObservablesFormatifs dans le même arbre de rendu.
- *
- * @module components/TableauDeBord/TableauDeBord
+ * Sources : RF-M0-01 à RF-M0-04 (SRS, section 4.1)
  */
 
 import PropTypes from "prop-types";
@@ -32,13 +15,6 @@ import { useObservablesFormatifs } from "../EvaluationFormative/useObservablesFo
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/**
- * Résout les fractionsIds d'une séance en notations chiffrées affichables.
- * Ex. : ['1-2', '1-4'] → '1/2, 1/4'
- *
- * @param {string[]} fractionsIds
- * @returns {string}
- */
 function resoudreFractions(fractionsIds) {
     return fractionsIds
         .map((id) => FRACTIONS.find((f) => f.id === id)?.chiffres ?? id)
@@ -47,12 +23,6 @@ function resoudreFractions(fractionsIds) {
 
 // ── Constantes visuelles ──────────────────────────────────────────────────────
 
-/**
- * Couleurs d'accentuation par séance — cohérence avec FractionLigne (M3)
- * et les palettes établies dans le projet.
- *
- * @type {Record<string, { bordure: string, titre: string, badge: string }>}
- */
 const COULEURS_SEANCE = {
     S1: {
         bordure: "border-blue-200",
@@ -86,10 +56,6 @@ const COULEURS_SEANCE = {
     },
 };
 
-/**
- * Configuration des états de complétion des observables (RF-M0-03).
- * @type {Record<string, { label: string, classes: string, icone: string }>}
- */
 const COMPLETION_UI = {
     non_commence: {
         label: "Non commencé",
@@ -108,10 +74,6 @@ const COMPLETION_UI = {
     },
 };
 
-/**
- * Configuration des modules de navigation (RF-M0-02).
- * @type {Array<{ vue: string, module: string, label: string, description: string, classes: string }>}
- */
 const MODULES_NAV = [
     {
         vue: VUES.MODELAGE,
@@ -146,12 +108,6 @@ const MODULES_NAV = [
 
 // ── Sous-composants ───────────────────────────────────────────────────────────
 
-/**
- * Badge de complétion des observables M4 (RF-M0-03).
- *
- * @param {Object} props
- * @param {'non_commence'|'en_cours'|'complet'} props.etat
- */
 function BadgeCompletion({ etat }) {
     const ui = COMPLETION_UI[etat] ?? COMPLETION_UI.non_commence;
     return (
@@ -169,15 +125,6 @@ BadgeCompletion.propTypes = {
     etat: PropTypes.oneOf(["non_commence", "en_cours", "complet"]).isRequired,
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Carte d'une séance (RF-M0-01 + RF-M0-03).
- *
- * @param {Object} props
- * @param {import('../../config/observables.config').Seance} props.seance
- * @param {'non_commence'|'en_cours'|'complet'} props.completion
- */
 function CarteSeance({ seance, completion }) {
     const couleurs = COULEURS_SEANCE[seance.id] ?? COULEURS_SEANCE.S1;
     const fractions = resoudreFractions(seance.fractionsIds);
@@ -185,18 +132,15 @@ function CarteSeance({ seance, completion }) {
 
     return (
         <div
-            className={`bg-white border-2 ${couleurs.bordure} rounded-2xl p-4
-            space-y-3 shadow-sm`}
+            className={`bg-white border-2 ${couleurs.bordure} rounded-2xl p-4 space-y-3 shadow-sm`}
         >
-            {/* ── En-tête : identifiant + durée + format ── */}
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
                     <span className={`text-2xl font-black ${couleurs.titre}`}>
                         {seance.id}
                     </span>
                     <span
-                        className={`text-xs font-semibold px-2 py-0.5 rounded-full
-                        ${couleurs.badge}`}
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-full ${couleurs.badge}`}
                     >
                         {formatLabel}
                     </span>
@@ -205,26 +149,18 @@ function CarteSeance({ seance, completion }) {
                     {seance.duree}
                 </span>
             </div>
-
-            {/* ── Titre ── */}
             <p className="text-sm font-semibold text-slate-700 leading-snug">
                 {seance.titre}
             </p>
-
-            {/* ── Fractions ciblées ── */}
             <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs text-slate-400">Fractions :</span>
                 <span className="text-xs font-mono font-semibold text-slate-600">
                     {fractions}
                 </span>
             </div>
-
-            {/* ── Artefact pédagogique ── */}
             <p className="text-xs text-slate-500 leading-snug border-t border-slate-100 pt-2">
                 {seance.artefact}
             </p>
-
-            {/* ── Badge complétion observables RF-M0-03 ── */}
             <div className="flex items-center justify-between pt-1">
                 <span className="text-xs text-slate-400">Observables M4 :</span>
                 <BadgeCompletion etat={completion} />
@@ -246,18 +182,6 @@ CarteSeance.propTypes = {
         .isRequired,
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Bouton de navigation vers un module (RF-M0-02).
- *
- * @param {Object}   props
- * @param {string}   props.module      - Ex. "M1"
- * @param {string}   props.label       - Libellé court
- * @param {string}   props.description - Sous-titre
- * @param {string}   props.classes     - Classes Tailwind d'accentuation
- * @param {Function} props.onClick
- */
 function BoutonModule({ module, label, description, classes, onClick }) {
     return (
         <button
@@ -290,13 +214,10 @@ BoutonModule.propTypes = {
 // ── Composant principal ───────────────────────────────────────────────────────
 
 /**
- * Tableau de bord de séquence — module M0.
- *
  * @param {Object}   props
- * @param {Function} props.onNaviguer - (vue: string) => void — fourni par App.jsx
+ * @param {Function} props.onNaviguer - (vue: string) => void
  */
 export default function TableauDeBord({ onNaviguer }) {
-    // Option A (décision sprint 14) : instance locale, vues exclusives.
     const { getCompletionSeance } = useObservablesFormatifs();
 
     return (
@@ -371,10 +292,6 @@ export default function TableauDeBord({ onNaviguer }) {
                     ))}
                 </div>
             </div>
-
-            <p className="text-xs text-slate-400 text-center pb-2">
-                Sprint 14 — M0 Tableau de bord (RF-M0-01 à RF-M0-04).
-            </p>
         </div>
     );
 }
