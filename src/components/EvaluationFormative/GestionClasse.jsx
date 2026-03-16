@@ -8,11 +8,9 @@
  * (classe virtuelle). Cette liste est réutilisée pour toutes les séances. »
  *
  * Correction sprint 13b :
- *   onReinitialiser est désormais optionnel (PropTypes.func, sans isRequired).
- *   Le bouton « Réinitialiser » n'est rendu que si la prop est fournie.
- *   Justification : dans ObservablesFormatifs, la réinitialisation globale de
- *   la liste est réservée au sprint 14 (tableau de bord M0). Passer undefined
- *   provoquait un onClick silencieux et un avertissement PropTypes.
+ *   - onReinitialiser est optionnel ; le bouton est masqué si la prop est absente.
+ *   - Le bouton d'ajout est remplacé par une icône « + » compacte (taille fixe)
+ *     pour ne pas comprimer l'input dans le panneau 280 px.
  */
 
 import { useState } from "react";
@@ -55,22 +53,21 @@ export default function GestionClasse({
                     Liste de la classe
                 </h3>
                 <p className="text-xs text-slate-400">
-                    Saisissez les prénoms des élèves pour enregistrer leurs
-                    données.
+                    Saisissez les prénoms des élèves.
                 </p>
             </div>
 
             {/* ── Saisie d'un prénom ── */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
                 <input
                     type="text"
                     value={saisie}
                     onChange={(e) => setSaisie(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Prénom de l'élève…"
+                    placeholder="Prénom…"
                     maxLength={40}
-                    className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg
-                        focus:outline-none focus:ring-2 focus:ring-blue-400
+                    className="flex-1 min-w-0 px-3 py-2 text-sm border border-slate-300
+                        rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400
                         focus:border-transparent placeholder:text-slate-300"
                     aria-label="Saisir le prénom d'un élève"
                 />
@@ -78,23 +75,24 @@ export default function GestionClasse({
                     type="button"
                     onClick={handleAjouter}
                     disabled={!saisie.trim()}
+                    aria-label="Ajouter l'élève"
                     className={[
-                        "px-3 py-2 rounded-lg text-sm font-semibold transition-colors",
+                        "shrink-0 w-9 h-9 rounded-lg text-lg font-bold leading-none",
+                        "flex items-center justify-center transition-colors",
                         saisie.trim()
                             ? "bg-blue-600 text-white hover:bg-blue-700"
-                            : "bg-slate-100 text-slate-400 cursor-not-allowed",
+                            : "bg-slate-100 text-slate-300 cursor-not-allowed",
                     ].join(" ")}
-                    aria-label="Ajouter l'élève"
                 >
-                    Ajouter
+                    +
                 </button>
             </div>
 
             {/* ── Liste des élèves ── */}
             {eleves.length === 0 ? (
                 <p
-                    className="text-xs text-slate-400 text-center py-4 border border-dashed
-                    border-slate-200 rounded-lg"
+                    className="text-xs text-slate-400 text-center py-4 border
+                    border-dashed border-slate-200 rounded-lg"
                 >
                     Aucun élève dans la liste.
                 </p>
@@ -104,23 +102,26 @@ export default function GestionClasse({
                         <li
                             key={eleve.id}
                             className={[
-                                "flex items-center justify-between gap-2 px-3 py-2 rounded-lg",
-                                "border text-sm cursor-pointer transition-colors select-none",
+                                "flex items-center justify-between gap-2 px-3 py-2",
+                                "rounded-lg border text-sm cursor-pointer transition-colors",
+                                "select-none",
                                 eleveSelectionne === eleve.id
                                     ? "bg-blue-50 border-blue-300 text-blue-800"
                                     : "bg-white border-slate-200 text-slate-700 hover:border-blue-200",
                             ].join(" ")}
                             onClick={() => onSelectionner(eleve.id)}
                         >
-                            <span className="font-medium">{eleve.prenom}</span>
+                            <span className="font-medium truncate">
+                                {eleve.prenom}
+                            </span>
                             <button
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onSupprimer(eleve.id);
                                 }}
-                                className="text-slate-300 hover:text-red-400 transition-colors
-                                    text-base leading-none"
+                                className="shrink-0 text-slate-300 hover:text-red-400
+                                    transition-colors text-base leading-none"
                                 aria-label={`Supprimer ${eleve.prenom}`}
                             >
                                 ×
@@ -157,7 +158,7 @@ GestionClasse.propTypes = {
     onAjouter: PropTypes.func.isRequired,
     onSupprimer: PropTypes.func.isRequired,
     onSelectionner: PropTypes.func.isRequired,
-    onReinitialiser: PropTypes.func, // optionnel — bouton masqué si absent
+    onReinitialiser: PropTypes.func,
 };
 
 GestionClasse.defaultProps = {
